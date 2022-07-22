@@ -26,6 +26,11 @@ public class TransactionController {
         logger.fatal("Damn! Fatal error. Please fix me.");
         return service.findAll();
     }
+    @GetMapping("/{id}")
+    public Mono<Transaction> read(@PathVariable String id){
+        Mono<Transaction> transaction = service.findById(id);
+        return transaction;
+    }
 
     @PostMapping
     public Mono<Transaction> create(@RequestBody Transaction transaction) {

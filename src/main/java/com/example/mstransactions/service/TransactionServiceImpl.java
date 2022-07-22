@@ -19,6 +19,11 @@ public class TransactionServiceImpl implements ITransactionService {
     }
 
     @Override
+    public Mono<Transaction> findById(String id) {
+        return repo.findById(id);
+    }
+
+    @Override
     public Mono<Transaction> create(Transaction transaction) {
         return repo.save(transaction);
     }
