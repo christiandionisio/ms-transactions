@@ -1,10 +1,16 @@
 package com.example.mstransactions.controller;
 
+import com.example.mstransactions.data.dto.OperationData;
+import com.example.mstransactions.data.dto.TransactionData;
+import com.example.mstransactions.data.dto.TransactionDto;
+import com.example.mstransactions.data.enums.TransactionTypeEnum;
 import com.example.mstransactions.model.Transaction;
 import com.example.mstransactions.service.ITransactionService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -47,4 +53,13 @@ public class TransactionController {
         return service.delete(transactionId);
     }
 
+    @PostMapping("/deposit")
+    public Mono<ResponseEntity<Transaction>> makeDeposit(@RequestBody TransactionDto transaction, final ServerHttpRequest req) {
+        return service.makeDeposit(transaction, req);
+    }
+
+    @PostMapping("/withdrawal")
+    public Mono<Transaction> makeWithdrawal(@RequestBody TransactionDto transaction) {
+        return service.makeWithdrawal(transaction);
+    }
 }
