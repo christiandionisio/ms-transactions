@@ -1,21 +1,20 @@
 package com.example.mstransactions.service;
 
+import com.example.mstransactions.data.Account;
 import com.example.mstransactions.data.dto.OperationData;
-import com.example.mstransactions.data.dto.TransactionData;
 import com.example.mstransactions.data.dto.TransactionDto;
 import com.example.mstransactions.data.enums.TransactionTypeEnum;
+import com.example.mstransactions.error.AccountNotFoundException;
 import com.example.mstransactions.model.Transaction;
 import com.example.mstransactions.repo.TransactionRepo;
+import com.example.mstransactions.utils.TransactionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.net.URI;
+import java.math.BigDecimal;
 
 @Service
 public class TransactionServiceImpl implements ITransactionService {
@@ -49,13 +48,16 @@ public class TransactionServiceImpl implements ITransactionService {
     }
 
     @Override
-    public Mono<ResponseEntity<Transaction>> makeDeposit(TransactionDto transaction, final ServerHttpRequest req) {
+    public Mono<Transaction> makeDeposit(TransactionDto transaction, final ServerHttpRequest req) {
         OperationData operationData = new OperationData(TransactionTypeEnum.DEPOSIT.getTransactionType(), transaction.getAmount(), transaction.getTransactionDate(), transaction.getProductId(),
                 transaction.getOriginAccount(), transaction.getDestinationAccount());
 
-        return this.saveOperation(operationData).map( p -> ResponseEntity.created(URI.create(req.getURI().toString().concat("/").concat(p.getTransactionId())))
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(p));
+        return TransactionUtil.findAccountById(transaction.getProductId()).flatMap(account -> {
+            BigDecimal actualAmount = account.getBalance();
+            account.setBalance(actualAmount.add(transaction.getAmount()));
+            return TransactionUtil.updateAccountBalance(account)
+                    .flatMap(update -> this.saveOperation(operationData));
+        });
     }
 
     @Override

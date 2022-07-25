@@ -1,6 +1,7 @@
 package com.example.mstransactions.controller;
 
 import com.example.mstransactions.data.dto.OperationData;
+import com.example.mstransactions.data.dto.ResponseTemplateDto;
 import com.example.mstransactions.data.dto.TransactionData;
 import com.example.mstransactions.data.dto.TransactionDto;
 import com.example.mstransactions.data.enums.TransactionTypeEnum;
@@ -9,11 +10,15 @@ import com.example.mstransactions.service.ITransactionService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/transactions")
@@ -54,8 +59,16 @@ public class TransactionController {
     }
 
     @PostMapping("/deposit")
-    public Mono<ResponseEntity<Transaction>> makeDeposit(@RequestBody TransactionDto transaction, final ServerHttpRequest req) {
-        return service.makeDeposit(transaction, req);
+    public Mono<ResponseEntity<Object>> makeDeposit(@RequestBody TransactionDto transaction, final ServerHttpRequest req) {
+        return service.makeDeposit(transaction, req)
+                .flatMap(deposit -> {
+                    ResponseEntity<Object> response = ResponseEntity.created(URI.create(req.getURI().toString().concat("/").concat(deposit.getTransactionId())))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .body(deposit);
+                    return Mono.just(response);
+                })
+                .defaultIfEmpty(new ResponseEntity<>(new ResponseTemplateDto(null,
+                        "Account not found"), HttpStatus.NOT_FOUND));
     }
 
     @PostMapping("/withdrawal")
