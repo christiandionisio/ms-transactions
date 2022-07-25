@@ -24,4 +24,5 @@ public class Transaction {
     private String transactionDate;
     private String productId;
     private String productType;
+    private Integer quotaNumber;
 }

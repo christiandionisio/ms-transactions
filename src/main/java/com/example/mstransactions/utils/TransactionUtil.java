@@ -1,7 +1,9 @@
 package com.example.mstransactions.utils;
 
 import com.example.mstransactions.data.Account;
+import com.example.mstransactions.data.Credit;
 import com.example.mstransactions.error.AccountNotFoundException;
+import com.example.mstransactions.error.CreditNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -26,5 +28,16 @@ public class TransactionUtil {
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(Account.class);
+    }
+
+    public static Mono<Credit> findCreditById(String id) {
+        return WebClient.create().get()
+                .uri("http://localhost:8085/credits/" + id)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .onStatus(HttpStatus::is4xxClientError, response ->
+                        Mono.error(new CreditNotFoundException(id))
+                )
+                .bodyToMono(Credit.class);
     }
 }

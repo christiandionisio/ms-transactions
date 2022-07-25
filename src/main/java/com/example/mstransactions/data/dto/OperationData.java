@@ -1,7 +1,6 @@
 package com.example.mstransactions.data.dto;
 
 import com.example.mstransactions.data.enums.ProductTypeEnum;
-import com.example.mstransactions.data.enums.TransactionTypeEnum;
 
 import java.math.BigDecimal;
 

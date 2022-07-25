@@ -2,7 +2,9 @@ package com.example.mstransactions.service;
 
 import com.example.mstransactions.data.Account;
 import com.example.mstransactions.data.dto.OperationData;
+import com.example.mstransactions.data.dto.PaymentData;
 import com.example.mstransactions.data.dto.TransactionDto;
+import com.example.mstransactions.data.enums.ProductTypeEnum;
 import com.example.mstransactions.data.enums.TransactionTypeEnum;
 import com.example.mstransactions.error.AccountNotFoundException;
 import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
@@ -81,9 +83,45 @@ public class TransactionServiceImpl implements ITransactionService {
     public Mono<Transaction> saveOperation(OperationData operationData){
         Transaction saveTransaction = Transaction.builder()
                 .transactionDate(operationData.getTransactionDate())
-                .amount(operationData.getAmount()).transactionType(operationData.getTransactionType())
-                .originAccount(operationData.getOriginAccount()).destinationAccount(operationData.getDestinationAccount())
-                .productId(operationData.getProductId()).productType(operationData.getProductType()).build();
+                .amount(operationData.getAmount())
+                .transactionType(operationData.getTransactionType())
+                .originAccount(operationData.getOriginAccount())
+                .destinationAccount(operationData.getDestinationAccount())
+                .productId(operationData.getProductId())
+                .productType(operationData.getProductType()).build();
+        return repo.save(saveTransaction);
+    }
+
+    @Override
+    public Mono<Transaction> makePayment(TransactionDto transactionDto) {
+        PaymentData paymentData = new PaymentData(transactionDto.getAmount(), transactionDto.getTransactionDate(), transactionDto.getProductId(), 1);
+
+        return TransactionUtil.findCreditById(transactionDto.getProductId()).flatMap(credit -> {
+                /*return repo.countTransactionByProductId(transactionDto.getProductId())
+                    .flatMap(count -> {
+
+                        Integer count = 0;
+                        if(lastPaymentExist == null){
+                            count = 1;
+                        }else{
+                            count = lastPaymentExist.getQuotaNumber() + 1;
+                        }
+                        System.out.println("Cantidad devuelta" + count.intValue());
+                        //paymentData.setQuotaNumber(count + 1);
+                    });*/
+                return this.savePayment(paymentData);
+    });
+    }
+
+    public Mono<Transaction> savePayment(PaymentData paymentData){
+        Transaction saveTransaction = Transaction.builder()
+                .transactionDate(paymentData.getTransactionDate())
+                .amount(paymentData.getAmount())
+                .transactionType(paymentData.getTransactionType())
+                .productId(paymentData.getProductId())
+                .productType(paymentData.getProductType())
+                .quotaNumber(paymentData.getQuotaNumber()).build();
+
         return repo.save(saveTransaction);
     }
 }

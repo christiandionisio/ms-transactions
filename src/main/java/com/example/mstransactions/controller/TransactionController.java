@@ -64,7 +64,7 @@ public class TransactionController {
     public Mono<ResponseEntity<Object>> makeDeposit(@RequestBody TransactionDto transaction) {
         return service.makeDeposit(transaction)
                 .flatMap(deposit -> {
-                    ResponseEntity<Object> response = ResponseEntity.created(URI.create("http://localhost:8083/accounts/".concat(deposit.getTransactionId())))
+                    ResponseEntity<Object> response = ResponseEntity.created(URI.create("http://localhost:8086/transactions/".concat(deposit.getTransactionId())))
                             .contentType(MediaType.APPLICATION_JSON)
                             .body(deposit);
                     return Mono.just(response);
@@ -77,7 +77,7 @@ public class TransactionController {
     public Mono<ResponseEntity<Object>> makeWithdrawal(@RequestBody TransactionDto transaction) {
         return service.makeWithdrawal(transaction)
                 .flatMap(deposit -> {
-                    ResponseEntity<Object> response = ResponseEntity.created(URI.create("http://localhost:8083/accounts/".concat(deposit.getTransactionId())))
+                    ResponseEntity<Object> response = ResponseEntity.created(URI.create("http://localhost:8086/transactions/".concat(deposit.getTransactionId())))
                             .contentType(MediaType.APPLICATION_JSON)
                             .body(deposit);
                     return Mono.just(response);
@@ -92,5 +92,18 @@ public class TransactionController {
                 })
                 .defaultIfEmpty(new ResponseEntity<>(new ResponseTemplateDto(null,
                         "Account not found"), HttpStatus.NOT_FOUND));
+    }
+
+    @PostMapping("/payment")
+    public Mono<ResponseEntity<Object>> makePayment(@RequestBody TransactionDto transaction) {
+        return service.makePayment(transaction)
+                .flatMap(payment -> {
+                    ResponseEntity<Object> response = ResponseEntity.created(URI.create("http://localhost:8086/transactions/".concat(payment.getTransactionId())))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .body(payment);
+                    return Mono.just(response);
+                })
+                .defaultIfEmpty(new ResponseEntity<>(new ResponseTemplateDto(null,
+                        "Payment not found"), HttpStatus.NOT_FOUND));
     }
 }
