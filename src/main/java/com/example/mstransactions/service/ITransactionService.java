@@ -18,4 +18,6 @@ public interface ITransactionService {
     Mono<Transaction> makeWithdrawal(TransactionDto transactionDto);
 
     Mono<Transaction> makePayment(TransactionDto transactionDto);
+
+    Mono<Transaction> makeConsumption(TransactionDto transactionDto);
 }

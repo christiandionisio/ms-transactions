@@ -11,4 +11,5 @@ public class TransactionDto {
     private String destinationAccount;
     private String transactionDate;
     private String productId;
+    private String commerceName;
 }

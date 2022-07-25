@@ -25,4 +25,5 @@ public class Transaction {
     private String productId;
     private String productType;
     private Integer quotaNumber;
+    private String commerceName;
 }

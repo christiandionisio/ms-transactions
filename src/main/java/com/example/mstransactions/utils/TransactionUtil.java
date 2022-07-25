@@ -2,7 +2,9 @@ package com.example.mstransactions.utils;
 
 import com.example.mstransactions.data.Account;
 import com.example.mstransactions.data.Credit;
+import com.example.mstransactions.data.dto.CreditCard;
 import com.example.mstransactions.error.AccountNotFoundException;
+import com.example.mstransactions.error.CreditCardNotFoundException;
 import com.example.mstransactions.error.CreditNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -39,5 +41,25 @@ public class TransactionUtil {
                         Mono.error(new CreditNotFoundException(id))
                 )
                 .bodyToMono(Credit.class);
+    }
+
+    public static Mono<CreditCard> findCreditCardById(String id) {
+        return WebClient.create().get()
+                .uri("http://localhost:8084/credit-cards/" + id)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .onStatus(HttpStatus::is4xxClientError, response ->
+                        Mono.error(new CreditCardNotFoundException(id))
+                )
+                .bodyToMono(CreditCard.class);
+    }
+
+    public static Mono<CreditCard> updateCreditCardLimit(CreditCard creditCard) {
+        return WebClient.create().put()
+                .uri("http://localhost:8084/credit-cards")
+                .bodyValue(creditCard)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(CreditCard.class);
     }
 }

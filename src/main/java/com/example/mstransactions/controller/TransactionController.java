@@ -104,6 +104,19 @@ public class TransactionController {
                     return Mono.just(response);
                 })
                 .defaultIfEmpty(new ResponseEntity<>(new ResponseTemplateDto(null,
-                        "Payment not found"), HttpStatus.NOT_FOUND));
+                        "Credit not found"), HttpStatus.NOT_FOUND));
+    }
+
+    @PostMapping("/consumption")
+    public Mono<ResponseEntity<Object>> makeConsumption(@RequestBody TransactionDto transaction) {
+        return service.makePayment(transaction)
+                .flatMap(payment -> {
+                    ResponseEntity<Object> response = ResponseEntity.created(URI.create("http://localhost:8086/transactions/".concat(payment.getTransactionId())))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .body(payment);
+                    return Mono.just(response);
+                })
+                .defaultIfEmpty(new ResponseEntity<>(new ResponseTemplateDto(null,
+                        "Credit Card not found"), HttpStatus.NOT_FOUND));
     }
 }

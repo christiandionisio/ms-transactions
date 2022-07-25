@@ -1,6 +1,7 @@
 package com.example.mstransactions.service;
 
 import com.example.mstransactions.data.Account;
+import com.example.mstransactions.data.dto.ConsumptionData;
 import com.example.mstransactions.data.dto.OperationData;
 import com.example.mstransactions.data.dto.PaymentData;
 import com.example.mstransactions.data.dto.TransactionDto;
@@ -8,6 +9,7 @@ import com.example.mstransactions.data.enums.ProductTypeEnum;
 import com.example.mstransactions.data.enums.TransactionTypeEnum;
 import com.example.mstransactions.error.AccountNotFoundException;
 import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
+import com.example.mstransactions.error.CreditCardWithInsuficientBalanceException;
 import com.example.mstransactions.model.Transaction;
 import com.example.mstransactions.repo.TransactionRepo;
 import com.example.mstransactions.utils.TransactionUtil;
@@ -121,6 +123,35 @@ public class TransactionServiceImpl implements ITransactionService {
                 .productId(paymentData.getProductId())
                 .productType(paymentData.getProductType())
                 .quotaNumber(paymentData.getQuotaNumber()).build();
+
+        return repo.save(saveTransaction);
+    }
+
+    @Override
+    public Mono<Transaction> makeConsumption(TransactionDto transaction) {
+        ConsumptionData consumptionData = new ConsumptionData(transaction.getAmount(), transaction.getTransactionDate(), transaction.getProductId(),
+               transaction.getCommerceName());
+
+        return TransactionUtil.findCreditCardById(transaction.getProductId()).flatMap(creditCard -> {
+            BigDecimal actualAmount = creditCard.getCreditLimit();
+            if(actualAmount.compareTo(transaction.getAmount()) != -1){
+                creditCard.setCreditLimit(actualAmount.subtract(transaction.getAmount()));
+                return TransactionUtil.updateCreditCardLimit(creditCard)
+                        .flatMap(update -> this.saveConsumption(consumptionData));
+            }else{
+                return Mono.error(new CreditCardWithInsuficientBalanceException(creditCard.getCreditCardId()));
+            }
+        });
+    }
+
+    public Mono<Transaction> saveConsumption(ConsumptionData consumptionData){
+        Transaction saveTransaction = Transaction.builder()
+                .transactionDate(consumptionData.getTransactionDate())
+                .amount(consumptionData.getAmount())
+                .transactionType(consumptionData.getTransactionType())
+                .productId(consumptionData.getProductId())
+                .productType(consumptionData.getProductType())
+                .commerceName(consumptionData.getCommerceName()).build();
 
         return repo.save(saveTransaction);
     }
