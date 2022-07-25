@@ -109,7 +109,7 @@ public class TransactionController {
 
     @PostMapping("/consumption")
     public Mono<ResponseEntity<Object>> makeConsumption(@RequestBody TransactionDto transaction) {
-        return service.makePayment(transaction)
+        return service.makeConsumption(transaction)
                 .flatMap(payment -> {
                     ResponseEntity<Object> response = ResponseEntity.created(URI.create("http://localhost:8086/transactions/".concat(payment.getTransactionId())))
                             .contentType(MediaType.APPLICATION_JSON)
