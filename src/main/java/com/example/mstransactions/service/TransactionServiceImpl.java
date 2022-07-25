@@ -5,6 +5,7 @@ import com.example.mstransactions.data.dto.OperationData;
 import com.example.mstransactions.data.dto.TransactionDto;
 import com.example.mstransactions.data.enums.TransactionTypeEnum;
 import com.example.mstransactions.error.AccountNotFoundException;
+import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
 import com.example.mstransactions.model.Transaction;
 import com.example.mstransactions.repo.TransactionRepo;
 import com.example.mstransactions.utils.TransactionUtil;
@@ -48,7 +49,7 @@ public class TransactionServiceImpl implements ITransactionService {
     }
 
     @Override
-    public Mono<Transaction> makeDeposit(TransactionDto transaction, final ServerHttpRequest req) {
+    public Mono<Transaction> makeDeposit(TransactionDto transaction) {
         OperationData operationData = new OperationData(TransactionTypeEnum.DEPOSIT.getTransactionType(), transaction.getAmount(), transaction.getTransactionDate(), transaction.getProductId(),
                 transaction.getOriginAccount(), transaction.getDestinationAccount());
 
@@ -64,8 +65,17 @@ public class TransactionServiceImpl implements ITransactionService {
     public Mono<Transaction> makeWithdrawal(TransactionDto transaction) {
         OperationData operationData = new OperationData(TransactionTypeEnum.WITHDRAWAL.getTransactionType(), transaction.getAmount(), transaction.getTransactionDate(), transaction.getProductId(),
                 transaction.getOriginAccount(), transaction.getDestinationAccount());
-        //TODO UPDATE BALANCE OF ACCOUNT
-        return   this.saveOperation(operationData);
+
+        return TransactionUtil.findAccountById(transaction.getProductId()).flatMap(account -> {
+            BigDecimal actualAmount = account.getBalance();
+            if(actualAmount.compareTo(transaction.getAmount()) != -1){
+                account.setBalance(actualAmount.subtract(transaction.getAmount()));
+                return TransactionUtil.updateAccountBalance(account)
+                        .flatMap(update -> this.saveOperation(operationData));
+            }else{
+                return Mono.error(new AccountWithInsuficientBalanceException(account.getAccountId()));
+            }
+        });
     }
 
     public Mono<Transaction> saveOperation(OperationData operationData){

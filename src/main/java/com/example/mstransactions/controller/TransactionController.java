@@ -5,6 +5,8 @@ import com.example.mstransactions.data.dto.ResponseTemplateDto;
 import com.example.mstransactions.data.dto.TransactionData;
 import com.example.mstransactions.data.dto.TransactionDto;
 import com.example.mstransactions.data.enums.TransactionTypeEnum;
+import com.example.mstransactions.error.AccountNotFoundException;
+import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
 import com.example.mstransactions.model.Transaction;
 import com.example.mstransactions.service.ITransactionService;
 import org.apache.logging.log4j.LogManager;
@@ -59,10 +61,10 @@ public class TransactionController {
     }
 
     @PostMapping("/deposit")
-    public Mono<ResponseEntity<Object>> makeDeposit(@RequestBody TransactionDto transaction, final ServerHttpRequest req) {
-        return service.makeDeposit(transaction, req)
+    public Mono<ResponseEntity<Object>> makeDeposit(@RequestBody TransactionDto transaction) {
+        return service.makeDeposit(transaction)
                 .flatMap(deposit -> {
-                    ResponseEntity<Object> response = ResponseEntity.created(URI.create(req.getURI().toString().concat("/").concat(deposit.getTransactionId())))
+                    ResponseEntity<Object> response = ResponseEntity.created(URI.create("http://localhost:8083/accounts/".concat(deposit.getTransactionId())))
                             .contentType(MediaType.APPLICATION_JSON)
                             .body(deposit);
                     return Mono.just(response);
@@ -72,7 +74,23 @@ public class TransactionController {
     }
 
     @PostMapping("/withdrawal")
-    public Mono<Transaction> makeWithdrawal(@RequestBody TransactionDto transaction) {
-        return service.makeWithdrawal(transaction);
+    public Mono<ResponseEntity<Object>> makeWithdrawal(@RequestBody TransactionDto transaction) {
+        return service.makeWithdrawal(transaction)
+                .flatMap(deposit -> {
+                    ResponseEntity<Object> response = ResponseEntity.created(URI.create("http://localhost:8083/accounts/".concat(deposit.getTransactionId())))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .body(deposit);
+                    return Mono.just(response);
+                })
+                .onErrorResume(e -> {
+                    if (e instanceof AccountWithInsuficientBalanceException) {
+                        return Mono.just(new ResponseEntity<>(new ResponseTemplateDto(null,
+                                e.getMessage()), HttpStatus.FORBIDDEN));
+                    }
+
+                    return Mono.just(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+                })
+                .defaultIfEmpty(new ResponseEntity<>(new ResponseTemplateDto(null,
+                        "Account not found"), HttpStatus.NOT_FOUND));
     }
 }

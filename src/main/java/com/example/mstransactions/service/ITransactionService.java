@@ -13,7 +13,7 @@ public interface ITransactionService {
     Mono<Transaction> create(Transaction transaction);
     Mono<Transaction> update(Transaction transaction);
     Mono<Void> delete(String transactionId);
-    Mono<Transaction> makeDeposit(TransactionDto transactionDto, final ServerHttpRequest req);
+    Mono<Transaction> makeDeposit(TransactionDto transactionDto);
 
-    Mono<Transaction> makeWithdrawal(TransactionDto transaction);
+    Mono<Transaction> makeWithdrawal(TransactionDto transactionDto);
 }
