@@ -1,4 +1,4 @@
-package com.example.mstransactions.data.dto;
+package com.example.mstransactions.data;
 
 import lombok.Data;
 

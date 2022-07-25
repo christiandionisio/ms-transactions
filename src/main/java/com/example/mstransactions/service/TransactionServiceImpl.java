@@ -7,9 +7,7 @@ import com.example.mstransactions.data.dto.PaymentData;
 import com.example.mstransactions.data.dto.TransactionDto;
 import com.example.mstransactions.data.enums.ProductTypeEnum;
 import com.example.mstransactions.data.enums.TransactionTypeEnum;
-import com.example.mstransactions.error.AccountNotFoundException;
-import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
-import com.example.mstransactions.error.CreditCardWithInsuficientBalanceException;
+import com.example.mstransactions.error.*;
 import com.example.mstransactions.model.Transaction;
 import com.example.mstransactions.repo.TransactionRepo;
 import com.example.mstransactions.utils.TransactionUtil;
@@ -96,23 +94,22 @@ public class TransactionServiceImpl implements ITransactionService {
 
     @Override
     public Mono<Transaction> makePayment(TransactionDto transactionDto) {
-        PaymentData paymentData = new PaymentData(transactionDto.getAmount(), transactionDto.getTransactionDate(), transactionDto.getProductId(), 1);
 
         return TransactionUtil.findCreditById(transactionDto.getProductId()).flatMap(credit -> {
-                /*return repo.countTransactionByProductId(transactionDto.getProductId())
-                    .flatMap(count -> {
-
-                        Integer count = 0;
-                        if(lastPaymentExist == null){
-                            count = 1;
-                        }else{
-                            count = lastPaymentExist.getQuotaNumber() + 1;
-                        }
-                        System.out.println("Cantidad devuelta" + count.intValue());
-                        //paymentData.setQuotaNumber(count + 1);
-                    });*/
-                return this.savePayment(paymentData);
-    });
+                if(transactionDto.getAmount().compareTo(credit.getMonthlyFee()) == 0){
+                    return repo.countTransactionsByProductId(transactionDto.getProductId())
+                            .flatMap(count -> {
+                                Integer quotaNumber = count.intValue() + 1;
+                                if(quotaNumber.equals(credit.getTimeLimit() + 1)){
+                                    return Mono.error(new CreditPaymentAlreadyCompletedException(credit.getCreditId(), credit.getTimeLimit()));
+                                }
+                                PaymentData paymentData = new PaymentData(transactionDto.getAmount(), transactionDto.getTransactionDate(), transactionDto.getProductId(), quotaNumber);
+                                return this.savePayment(paymentData);
+                            });
+                }else{
+                    return  Mono.error(new CreditAmountToPayInvalidException(credit.getCreditId()));
+                }
+        });
     }
 
     public Mono<Transaction> savePayment(PaymentData paymentData){
@@ -142,6 +139,11 @@ public class TransactionServiceImpl implements ITransactionService {
                 return Mono.error(new CreditCardWithInsuficientBalanceException(creditCard.getCreditCardId()));
             }
         });
+    }
+
+    @Override
+    public Flux<Transaction> findTransactionsByProductId(String productId) {
+        return repo.findAllByProductId(productId);
     }
 
     public Mono<Transaction> saveConsumption(ConsumptionData consumptionData){

@@ -20,4 +20,6 @@ public interface ITransactionService {
     Mono<Transaction> makePayment(TransactionDto transactionDto);
 
     Mono<Transaction> makeConsumption(TransactionDto transactionDto);
+
+    Flux<Transaction> findTransactionsByProductId(String productId);
 }

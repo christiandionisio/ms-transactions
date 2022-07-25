@@ -1,12 +1,10 @@
 package com.example.mstransactions.controller;
 
-import com.example.mstransactions.data.dto.OperationData;
 import com.example.mstransactions.data.dto.ResponseTemplateDto;
-import com.example.mstransactions.data.dto.TransactionData;
 import com.example.mstransactions.data.dto.TransactionDto;
-import com.example.mstransactions.data.enums.TransactionTypeEnum;
-import com.example.mstransactions.error.AccountNotFoundException;
 import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
+import com.example.mstransactions.error.CreditAmountToPayInvalidException;
+import com.example.mstransactions.error.CreditPaymentAlreadyCompletedException;
 import com.example.mstransactions.model.Transaction;
 import com.example.mstransactions.service.ITransactionService;
 import org.apache.logging.log4j.LogManager;
@@ -15,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -30,6 +27,7 @@ public class TransactionController {
     private ITransactionService service;
 
     private static final Logger logger = LogManager.getLogger(TransactionController.class);
+
     @GetMapping
     public Flux<Transaction> findAll() {
         logger.debug("Debugging log");
@@ -39,8 +37,9 @@ public class TransactionController {
         logger.fatal("Damn! Fatal error. Please fix me.");
         return service.findAll();
     }
+
     @GetMapping("/{id}")
-    public Mono<Transaction> read(@PathVariable String id){
+    public Mono<Transaction> read(@PathVariable String id) {
         Mono<Transaction> transaction = service.findById(id);
         return transaction;
     }
@@ -103,6 +102,15 @@ public class TransactionController {
                             .body(payment);
                     return Mono.just(response);
                 })
+                .onErrorResume(e -> {
+                    if (e instanceof CreditAmountToPayInvalidException ||
+                            e instanceof CreditPaymentAlreadyCompletedException) {
+                        return Mono.just(new ResponseEntity<>(new ResponseTemplateDto(null,
+                                e.getMessage()), HttpStatus.FORBIDDEN));
+                    }
+
+                    return Mono.just(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+                })
                 .defaultIfEmpty(new ResponseEntity<>(new ResponseTemplateDto(null,
                         "Credit not found"), HttpStatus.NOT_FOUND));
     }
@@ -118,5 +126,10 @@ public class TransactionController {
                 })
                 .defaultIfEmpty(new ResponseEntity<>(new ResponseTemplateDto(null,
                         "Credit Card not found"), HttpStatus.NOT_FOUND));
+    }
+
+    @GetMapping("/byProduct/{productId}")
+    public Flux<Transaction> findTransactionsByProduct(@PathVariable String productId){
+        return service.findTransactionsByProductId(productId);
     }
 }

@@ -2,7 +2,7 @@ package com.example.mstransactions.utils;
 
 import com.example.mstransactions.data.Account;
 import com.example.mstransactions.data.Credit;
-import com.example.mstransactions.data.dto.CreditCard;
+import com.example.mstransactions.data.CreditCard;
 import com.example.mstransactions.error.AccountNotFoundException;
 import com.example.mstransactions.error.CreditCardNotFoundException;
 import com.example.mstransactions.error.CreditNotFoundException;

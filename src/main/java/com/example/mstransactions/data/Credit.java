@@ -11,7 +11,7 @@ public class Credit {
     private String paymentDate;
     private Integer timeLimit;
     private String initialDate;
-    private String monthlyFee;
+    private BigDecimal monthlyFee;
     private String creditType;
     private String customerId;
 }
