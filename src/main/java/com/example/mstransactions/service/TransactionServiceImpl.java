@@ -130,9 +130,11 @@ public class TransactionServiceImpl implements ITransactionService {
                transaction.getCommerceName());
 
         return TransactionUtil.findCreditCardById(transaction.getProductId()).flatMap(creditCard -> {
-            BigDecimal actualAmount = creditCard.getCreditLimit();
-            if(actualAmount.compareTo(transaction.getAmount()) != -1){
-                creditCard.setCreditLimit(actualAmount.subtract(transaction.getAmount()));
+            BigDecimal creditLimit = creditCard.getCreditLimit();
+            BigDecimal remainingCredit = creditCard.getRemainingCredit();
+
+            if(creditLimit.compareTo(transaction.getAmount()) != -1 && remainingCredit.compareTo(transaction.getAmount()) != -1){
+                creditCard.setRemainingCredit(remainingCredit.subtract(transaction.getAmount()));
                 return TransactionUtil.updateCreditCardLimit(creditCard)
                         .flatMap(update -> this.saveConsumption(consumptionData));
             }else{

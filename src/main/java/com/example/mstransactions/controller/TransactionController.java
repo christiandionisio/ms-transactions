@@ -4,6 +4,7 @@ import com.example.mstransactions.data.dto.ResponseTemplateDto;
 import com.example.mstransactions.data.dto.TransactionDto;
 import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
 import com.example.mstransactions.error.CreditAmountToPayInvalidException;
+import com.example.mstransactions.error.CreditCardWithInsuficientBalanceException;
 import com.example.mstransactions.error.CreditPaymentAlreadyCompletedException;
 import com.example.mstransactions.model.Transaction;
 import com.example.mstransactions.service.ITransactionService;
@@ -123,6 +124,13 @@ public class TransactionController {
                             .contentType(MediaType.APPLICATION_JSON)
                             .body(payment);
                     return Mono.just(response);
+                })
+                .onErrorResume(e -> {
+                    if (e instanceof CreditCardWithInsuficientBalanceException) {
+                        return Mono.just(new ResponseEntity<>(new ResponseTemplateDto(null,
+                                e.getMessage()), HttpStatus.FORBIDDEN));
+                    }
+                    return Mono.just(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
                 })
                 .defaultIfEmpty(new ResponseEntity<>(new ResponseTemplateDto(null,
                         "Credit Card not found"), HttpStatus.NOT_FOUND));

@@ -11,6 +11,7 @@ public class CreditCard {
     private String expirationDate;
     private String cvv;
     private BigDecimal creditLimit;
+    private BigDecimal remainingCredit;
     private String category;
     private String customerId;
 }
