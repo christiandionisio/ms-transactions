@@ -148,6 +148,11 @@ public class TransactionServiceImpl implements ITransactionService {
         return repo.findAllByProductId(productId);
     }
 
+    @Override
+    public Flux<Transaction> findTransactionsByProductTypeAndProductId(String productType, String productId) {
+        return repo.findAllByProductTypeAndProductId(productType, productId);
+    }
+
     public Mono<Transaction> saveConsumption(ConsumptionData consumptionData){
         Transaction saveTransaction = Transaction.builder()
                 .transactionDate(consumptionData.getTransactionDate())

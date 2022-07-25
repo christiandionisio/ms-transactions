@@ -22,4 +22,6 @@ public interface ITransactionService {
     Mono<Transaction> makeConsumption(TransactionDto transactionDto);
 
     Flux<Transaction> findTransactionsByProductId(String productId);
+
+    Flux<Transaction> findTransactionsByProductTypeAndProductId(String productType, String productId);
 }

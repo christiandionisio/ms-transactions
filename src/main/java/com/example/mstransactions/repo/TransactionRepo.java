@@ -8,4 +8,6 @@ import reactor.core.publisher.Mono;
 public interface TransactionRepo extends ReactiveMongoRepository<Transaction, String> {
     Mono<Long> countTransactionsByProductId(String productId);
     Flux<Transaction> findAllByProductId(String productId);
+    Flux<Transaction> findAllByProductTypeAndProductId(String productType, String productId);
+
 }
