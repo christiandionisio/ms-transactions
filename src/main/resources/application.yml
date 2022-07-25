@@ -3,7 +3,7 @@ spring:
     name: ms-transactions
   data:
     mongodb:
-      uri: "mongodb+srv://mean_user:EWpWinEnfJ2nc32R@cluster0.hcqaq.mongodb.net/proyecto1db?authSource=admin&replicaSet=atlas-m2z4np-shard-0&readPreference=primary&ssl=true"
+      uri: "mongodb+srv://mean_user:EWpWinEnfJ2nc32R@cluster0.hcqaq.mongodb.net/transactionsDB?authSource=admin&replicaSet=atlas-m2z4np-shard-0&readPreference=primary&ssl=true"
 
 server:
   port: 8086
