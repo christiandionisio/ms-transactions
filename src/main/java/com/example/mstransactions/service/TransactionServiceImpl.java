@@ -1,7 +1,7 @@
 package com.example.mstransactions.service;
 
 import com.example.mstransactions.data.dto.ConsumptionData;
-import com.example.mstransactions.data.dto.OperationData;
+import com.example.mstransactions.data.dto.TransferData;
 import com.example.mstransactions.data.dto.PaymentData;
 import com.example.mstransactions.data.dto.TransactionDto;
 import com.example.mstransactions.data.enums.TransactionTypeEnum;
@@ -49,43 +49,43 @@ public class TransactionServiceImpl implements ITransactionService {
 
     @Override
     public Mono<Transaction> makeDeposit(TransactionDto transaction) {
-        OperationData operationData = new OperationData(TransactionTypeEnum.DEPOSIT.getTransactionType(), transaction.getAmount(), transaction.getTransactionDate(), transaction.getProductId(),
-                transaction.getOriginAccount(), transaction.getDestinationAccount());
+        TransferData transferData = new TransferData(TransactionTypeEnum.DEPOSIT.getTransactionType(), transaction.getAmount(), transaction.getTransactionDate(), transaction.getProductId(),
+                null, null);
 
         return TransactionUtil.findAccountById(transaction.getProductId()).flatMap(account -> {
             BigDecimal actualAmount = account.getBalance();
             account.setBalance(actualAmount.add(transaction.getAmount()));
             return TransactionUtil.updateAccountBalance(account)
-                    .flatMap(update -> this.saveOperation(operationData));
+                    .flatMap(update -> this.saveOperation(transferData));
         });
     }
 
     @Override
     public Mono<Transaction> makeWithdrawal(TransactionDto transaction) {
-        OperationData operationData = new OperationData(TransactionTypeEnum.WITHDRAWAL.getTransactionType(), transaction.getAmount(), transaction.getTransactionDate(), transaction.getProductId(),
-                transaction.getOriginAccount(), transaction.getDestinationAccount());
+        TransferData transferData = new TransferData(TransactionTypeEnum.WITHDRAWAL.getTransactionType(), transaction.getAmount(), transaction.getTransactionDate(), transaction.getProductId(),
+                null, null);
 
         return TransactionUtil.findAccountById(transaction.getProductId()).flatMap(account -> {
             BigDecimal actualAmount = account.getBalance();
             if(actualAmount.compareTo(transaction.getAmount()) != -1){
                 account.setBalance(actualAmount.subtract(transaction.getAmount()));
                 return TransactionUtil.updateAccountBalance(account)
-                        .flatMap(update -> this.saveOperation(operationData));
+                        .flatMap(update -> this.saveOperation(transferData));
             }else{
                 return Mono.error(new AccountWithInsuficientBalanceException(account.getAccountId()));
             }
         });
     }
 
-    public Mono<Transaction> saveOperation(OperationData operationData){
+    public Mono<Transaction> saveOperation(TransferData transferData){
         Transaction saveTransaction = Transaction.builder()
-                .transactionDate(operationData.getTransactionDate())
-                .amount(operationData.getAmount())
-                .transactionType(operationData.getTransactionType())
-                .originAccount(operationData.getOriginAccount())
-                .destinationAccount(operationData.getDestinationAccount())
-                .productId(operationData.getProductId())
-                .productType(operationData.getProductType()).build();
+                .transactionDate(transferData.getTransactionDate())
+                .amount(transferData.getAmount())
+                .transactionType(transferData.getTransactionType())
+                .originAccount(transferData.getOriginAccount())
+                .destinationAccount(transferData.getDestinationAccount())
+                .productId(transferData.getProductId())
+                .productType(transferData.getProductType()).build();
         return repo.save(saveTransaction);
     }
 

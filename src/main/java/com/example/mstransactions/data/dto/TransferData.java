@@ -4,11 +4,11 @@ import com.example.mstransactions.data.enums.ProductTypeEnum;
 
 import java.math.BigDecimal;
 
-public class OperationData extends TransactionData{
+public class TransferData extends TransactionData{
     private String originAccount;
     private String destinationAccount;
 
-    public OperationData(String operationType, BigDecimal amount, String transactionDate, String productId, String originAccount, String destinationAccount) {
+    public TransferData(String operationType, BigDecimal amount, String transactionDate, String productId, String originAccount, String destinationAccount) {
         super(amount, operationType, transactionDate, productId, ProductTypeEnum.ACCOUNT.getProductType());
         this.originAccount = originAccount;
         this.destinationAccount = destinationAccount;
