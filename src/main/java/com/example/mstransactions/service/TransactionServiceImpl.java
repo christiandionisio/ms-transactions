@@ -1,18 +1,15 @@
 package com.example.mstransactions.service;
 
-import com.example.mstransactions.data.Account;
 import com.example.mstransactions.data.dto.ConsumptionData;
 import com.example.mstransactions.data.dto.OperationData;
 import com.example.mstransactions.data.dto.PaymentData;
 import com.example.mstransactions.data.dto.TransactionDto;
-import com.example.mstransactions.data.enums.ProductTypeEnum;
 import com.example.mstransactions.data.enums.TransactionTypeEnum;
 import com.example.mstransactions.error.*;
 import com.example.mstransactions.model.Transaction;
 import com.example.mstransactions.repo.TransactionRepo;
 import com.example.mstransactions.utils.TransactionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

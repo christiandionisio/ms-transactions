@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 public class TransactionUtil {
     public static Mono<Account> findAccountById(String id) {
         return WebClient.create().get()
-                .uri("http://localhost:8083/accounts/" + id)
+                .uri("http://localhost:9083/accounts/" + id)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .onStatus(HttpStatus::is4xxClientError, response ->
@@ -25,7 +25,7 @@ public class TransactionUtil {
 
     public static Mono<Account> updateAccountBalance(Account account) {
         return WebClient.create().put()
-                .uri("http://localhost:8083/accounts")
+                .uri("http://localhost:9083/accounts")
                 .bodyValue(account)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
@@ -34,7 +34,7 @@ public class TransactionUtil {
 
     public static Mono<Credit> findCreditById(String id) {
         return WebClient.create().get()
-                .uri("http://localhost:8085/credits/" + id)
+                .uri("http://localhost:9085/credits/" + id)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .onStatus(HttpStatus::is4xxClientError, response ->
@@ -45,7 +45,7 @@ public class TransactionUtil {
 
     public static Mono<CreditCard> findCreditCardById(String id) {
         return WebClient.create().get()
-                .uri("http://localhost:8084/credit-cards/" + id)
+                .uri("http://localhost:9084/credit-cards/" + id)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .onStatus(HttpStatus::is4xxClientError, response ->
@@ -56,7 +56,7 @@ public class TransactionUtil {
 
     public static Mono<CreditCard> updateCreditCardLimit(CreditCard creditCard) {
         return WebClient.create().put()
-                .uri("http://localhost:8084/credit-cards")
+                .uri("http://localhost:9084/credit-cards")
                 .bodyValue(creditCard)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
