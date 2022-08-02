@@ -9,8 +9,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 @Document(collection = "transaction")
 @Data
@@ -30,4 +28,5 @@ public class Transaction {
     private Integer quotaNumber;
     private String commerceName;
     private Boolean withCommission;
+    private String commissionAmount;
 }
