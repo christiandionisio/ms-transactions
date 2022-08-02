@@ -24,4 +24,6 @@ public interface ITransactionService {
     Flux<Transaction> findTransactionsByProductId(String productId);
 
     Flux<Transaction> findTransactionsByProductTypeAndProductId(String productType, String productId);
+
+    Mono<Transaction> transferBetweenAccounts(TransactionDto transactionDto);
 }

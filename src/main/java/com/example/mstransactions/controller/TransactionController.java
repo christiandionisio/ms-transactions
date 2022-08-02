@@ -147,4 +147,24 @@ public class TransactionController {
         return Mono.just(ResponseEntity.ok(service.findTransactionsByProductTypeAndProductId(productType, productId)))
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
+
+    @PostMapping("/transferBetweenAccounts")
+    public Mono<ResponseEntity<Object>> transferBetweenAccounts(@RequestBody TransactionDto transaction) {
+        return service.transferBetweenAccounts(transaction)
+                .flatMap(payment -> {
+                    ResponseEntity<Object> response = ResponseEntity.created(URI.create("http://localhost:8086/transactions/".concat(payment.getTransactionId())))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .body(payment);
+                    return Mono.just(response);
+                })
+                .onErrorResume(e -> {
+                    if (e instanceof AccountWithInsuficientBalanceException) {
+                        return Mono.just(new ResponseEntity<>(new ResponseTemplateDto(null,
+                                e.getMessage()), HttpStatus.FORBIDDEN));
+                    }
+                    return Mono.just(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+                })
+                .defaultIfEmpty(new ResponseEntity<>(new ResponseTemplateDto(null,
+                        "Account not found"), HttpStatus.NOT_FOUND));
+    }
 }
