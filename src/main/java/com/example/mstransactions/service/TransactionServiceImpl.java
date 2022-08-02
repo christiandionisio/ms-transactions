@@ -192,13 +192,12 @@ public class TransactionServiceImpl implements ITransactionService {
             BigDecimal actualAmount = originAccount.getBalance();
             if(actualAmount.compareTo(transactionDto.getAmount()) != -1){
                 originAccount.setBalance(actualAmount.subtract(transactionDto.getAmount()));
-                return TransactionUtil.updateAccountBalance(originAccount)
-                        .flatMap(update -> this.saveOperation(transferData));
+                return TransactionUtil.updateAccountBalance(originAccount);
             }else{
                 return Mono.error(new AccountWithInsuficientBalanceException(originAccount.getAccountId()));
             }
         })
-        .flatMap(transactionOrigin ->
+        .flatMap(accountOriginUpdated ->
             TransactionUtil.findAccountById(transferData.getDestinationAccount()).flatMap(destinationAccount -> {
                 destinationAccount.setBalance(destinationAccount.getBalance().add(transactionDto.getAmount()));
                 return TransactionUtil.updateAccountBalance(destinationAccount)
