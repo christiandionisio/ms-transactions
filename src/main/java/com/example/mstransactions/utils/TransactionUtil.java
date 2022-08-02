@@ -5,6 +5,7 @@ import com.example.mstransactions.data.AccountConfiguration;
 import com.example.mstransactions.data.Credit;
 import com.example.mstransactions.data.CreditCard;
 import com.example.mstransactions.data.dto.TransactionDto;
+import com.example.mstransactions.data.dto.TransferData;
 import com.example.mstransactions.error.AccountNotFoundException;
 import com.example.mstransactions.error.CreditCardNotFoundException;
 import com.example.mstransactions.error.CreditNotFoundException;
@@ -77,7 +78,7 @@ public class TransactionUtil {
     }
 
     public static Mono<Account> setBalanceCommision(Boolean isOutOfMaxTransactions, Account accountTransition,
-                                                    TransactionDto transaction) {
+                                                    TransactionDto transaction, TransferData transferData) {
         if (Boolean.TRUE.equals(isOutOfMaxTransactions)) {
             return TransactionUtil.findByAccountTypeAndName(accountTransition.getAccountType(), "commision")
                     .flatMap(accountConfiguration -> {
@@ -85,11 +86,13 @@ public class TransactionUtil {
                         BigDecimal commisionAmount = transaction.getAmount().multiply(commision);
                         BigDecimal finalAmount = transaction.getAmount().subtract(commisionAmount);
                         accountTransition.setBalance(accountTransition.getBalance().add(finalAmount));
+                        transferData.setWithCommission(true);
                         return Mono.just(accountTransition);
                     });
         } else {
             BigDecimal actualAmount = accountTransition.getBalance();
             accountTransition.setBalance(actualAmount.add(transaction.getAmount()));
+            transferData.setWithCommission(false);
             return Mono.just(accountTransition);
         }
     }

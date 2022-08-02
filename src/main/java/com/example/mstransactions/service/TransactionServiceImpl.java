@@ -68,24 +68,10 @@ public class TransactionServiceImpl implements ITransactionService {
                                     .flatMap(accountConfiguration -> (numberOfTransactions > accountConfiguration.getValue())
                                                 ? Mono.just(true)
                                                 : Mono.just(false))
-                                    .flatMap(isOutOfMaxTransactions -> {
-                                        if (Boolean.TRUE.equals(isOutOfMaxTransactions)) {
-                                            return TransactionUtil.findByAccountTypeAndName(accountTransition.getAccountType(), "commision")
-                                                    .flatMap(accountConfiguration -> {
-                                                        BigDecimal commision = BigDecimal.valueOf(accountConfiguration.getValue()*0.01);
-                                                        BigDecimal commisionAmount = transaction.getAmount().multiply(commision);
-                                                        BigDecimal finalAmount = transaction.getAmount().subtract(commisionAmount);
-                                                        accountTransition.setBalance(accountTransition.getBalance().add(finalAmount));
-                                                        transferData.setWithCommission(true);
-                                                        return Mono.just(accountTransition);
-                                                    });
-                                        } else {
-                                            BigDecimal actualAmount = accountTransition.getBalance();
-                                            accountTransition.setBalance(actualAmount.add(transaction.getAmount()));
-                                            transferData.setWithCommission(false);
-                                            return Mono.just(accountTransition);
-                                        }
-                                    })
+                                    .flatMap(isOutOfMaxTransactions ->
+                                            TransactionUtil.setBalanceCommision(isOutOfMaxTransactions, accountTransition,
+                                                    transaction, transferData)
+                                    )
                             )
                             .flatMap(finalAcount -> TransactionUtil.updateAccountBalance(finalAcount)
                                     .flatMap(update -> this.saveOperation(transferData))
