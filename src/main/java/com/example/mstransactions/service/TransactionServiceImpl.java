@@ -15,12 +15,18 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 @Service
 public class TransactionServiceImpl implements ITransactionService {
 
     @Autowired
     private TransactionRepo repo;
+
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     @Override
     public Flux<Transaction> findAll() {
@@ -52,12 +58,25 @@ public class TransactionServiceImpl implements ITransactionService {
         TransferData transferData = new TransferData(TransactionTypeEnum.DEPOSIT.getTransactionType(), transaction.getAmount(), transaction.getTransactionDate(), transaction.getProductId(),
                 null, null);
 
-        return TransactionUtil.findAccountById(transaction.getProductId()).flatMap(account -> {
-            BigDecimal actualAmount = account.getBalance();
-            account.setBalance(actualAmount.add(transaction.getAmount()));
-            return TransactionUtil.updateAccountBalance(account)
-                    .flatMap(update -> this.saveOperation(transferData));
-        });
+        return TransactionUtil.findAccountById(transaction.getProductId()).map(account -> {
+                    BigDecimal actualAmount = account.getBalance();
+                    account.setBalance(actualAmount.add(transaction.getAmount()));
+                    return account;
+                })
+                .flatMap(account2 -> {
+                    LocalDate localDate = LocalDate.parse(transaction.getTransactionDate(), FORMATTER);
+                    repo.findByTransactionDateBetween(localDate.withDayOfMonth(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant(),
+                            localDate.withDayOfMonth(localDate.getMonth().length(localDate.isLeapYear())).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant())
+                            .count()
+                            .map(transaction1 -> {
+                                System.out.println("TEST MAP:" + transaction1);
+                                return transaction1;
+                            })
+                            .subscribe();
+                    System.out.println(account2);
+                    return TransactionUtil.updateAccountBalance(account2)
+                            .flatMap(update -> this.saveOperation(transferData));
+                });
     }
 
     @Override
@@ -79,7 +98,7 @@ public class TransactionServiceImpl implements ITransactionService {
 
     public Mono<Transaction> saveOperation(TransferData transferData){
         Transaction saveTransaction = Transaction.builder()
-                .transactionDate(transferData.getTransactionDate())
+                .transactionDate(LocalDate.parse(transferData.getTransactionDate(), FORMATTER))
                 .amount(transferData.getAmount())
                 .transactionType(transferData.getTransactionType())
                 .originAccount(transferData.getOriginAccount())
@@ -111,7 +130,7 @@ public class TransactionServiceImpl implements ITransactionService {
 
     public Mono<Transaction> savePayment(PaymentData paymentData){
         Transaction saveTransaction = Transaction.builder()
-                .transactionDate(paymentData.getTransactionDate())
+                .transactionDate(LocalDate.parse(paymentData.getTransactionDate(), FORMATTER))
                 .amount(paymentData.getAmount())
                 .transactionType(paymentData.getTransactionType())
                 .productId(paymentData.getProductId())
@@ -152,7 +171,7 @@ public class TransactionServiceImpl implements ITransactionService {
 
     public Mono<Transaction> saveConsumption(ConsumptionData consumptionData){
         Transaction saveTransaction = Transaction.builder()
-                .transactionDate(consumptionData.getTransactionDate())
+                .transactionDate(LocalDate.parse(consumptionData.getTransactionDate(), FORMATTER))
                 .amount(consumptionData.getAmount())
                 .transactionType(consumptionData.getTransactionType())
                 .productId(consumptionData.getProductId())
