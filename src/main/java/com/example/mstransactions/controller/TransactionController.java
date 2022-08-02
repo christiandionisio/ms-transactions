@@ -1,6 +1,8 @@
 package com.example.mstransactions.controller;
 
+import com.example.mstransactions.data.dto.FilterDto;
 import com.example.mstransactions.data.dto.ResponseTemplateDto;
+import com.example.mstransactions.data.dto.TransactionCommissionDto;
 import com.example.mstransactions.data.dto.TransactionDto;
 import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
 import com.example.mstransactions.error.CreditAmountToPayInvalidException;
@@ -171,5 +173,11 @@ public class TransactionController {
     @GetMapping("/range")
     public Flux<Transaction> getTransactionsBetweenRange() {
         return service.findTransactionsBetweenRange();
+    }
+
+    @PostMapping ("/commisions")
+    public Mono<ResponseEntity<Object>> findCommissionsByProductId(@RequestBody FilterDto filterDto){
+        return Mono.just(ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON_UTF8)
+				.body(service.getTransactionsWithCommissions(filterDto)));
     }
 }

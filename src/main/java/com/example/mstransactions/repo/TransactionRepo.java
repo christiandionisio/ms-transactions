@@ -18,4 +18,6 @@ public interface TransactionRepo extends ReactiveMongoRepository<Transaction, St
     Flux<Transaction> findByTransactionDateBetween(Instant fromDate, Instant toDate);
 
     Flux<Transaction> findByTransactionDateBetween(LocalDateTime startDate, LocalDateTime endDate);
+    Flux<Transaction> findByProductIdAndTransactionDateBetweenAndWithCommissionIsTrue(String productId, LocalDateTime startDate, LocalDateTime endDate);
+
 }

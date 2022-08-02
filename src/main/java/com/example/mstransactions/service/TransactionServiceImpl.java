@@ -1,9 +1,6 @@
 package com.example.mstransactions.service;
 
-import com.example.mstransactions.data.dto.ConsumptionData;
-import com.example.mstransactions.data.dto.TransferData;
-import com.example.mstransactions.data.dto.PaymentData;
-import com.example.mstransactions.data.dto.TransactionDto;
+import com.example.mstransactions.data.dto.*;
 import com.example.mstransactions.data.enums.TransactionTypeEnum;
 import com.example.mstransactions.error.*;
 import com.example.mstransactions.model.Transaction;
@@ -27,6 +24,9 @@ public class TransactionServiceImpl implements ITransactionService {
     private TransactionRepo repo;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    private static final DateTimeFormatter FORMATTER_DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
 
     @Override
     public Flux<Transaction> findAll() {
@@ -218,5 +218,26 @@ public class TransactionServiceImpl implements ITransactionService {
         System.out.println("Mes actual ultimo dia: " + endDate);
 
         return repo.findByTransactionDateBetween(startDate, endDate);
+    }
+
+    @Override
+    public Flux<TransactionCommissionDto> getTransactionsWithCommissions(FilterDto filterDto) {
+        LocalDateTime startDate = LocalDateTime.parse(filterDto.getStartDate(), FORMATTER_DATE_TIME).minusSeconds(1);
+        LocalDateTime endDate = LocalDateTime.parse(filterDto.getEndDate(), FORMATTER_DATE_TIME).plusSeconds(1);
+
+        Flux<TransactionCommissionDto> flux = repo.findByProductIdAndTransactionDateBetweenAndWithCommissionIsTrue(filterDto.getProductId(), startDate, endDate)
+                .map(transaction -> createTransactionCommissionDto(transaction));
+        return flux;
+    }
+
+    public TransactionCommissionDto createTransactionCommissionDto(Transaction transaction){
+        TransactionCommissionDto transactionCommissionDto = new TransactionCommissionDto();
+        transactionCommissionDto.setTransactionId(transaction.getTransactionId());
+        transactionCommissionDto.setAmount(transaction.getAmount());
+        transactionCommissionDto.setTransactionType(transaction.getTransactionType());
+        transactionCommissionDto.setTransactionDate(transaction.getTransactionDate());
+        transactionCommissionDto.setProductType(transaction.getProductType());
+        transactionCommissionDto.setCommissionAmount(transaction.getCommissionAmount());
+        return transactionCommissionDto;
     }
 }
