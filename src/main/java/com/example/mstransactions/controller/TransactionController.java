@@ -147,4 +147,9 @@ public class TransactionController {
         return Mono.just(ResponseEntity.ok(service.findTransactionsByProductTypeAndProductId(productType, productId)))
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
+
+    @GetMapping("/range")
+    public Flux<Transaction> getTransactionsBetweenRange() {
+        return service.findTransactionsBetweenRange();
+    }
 }

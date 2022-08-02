@@ -1,5 +1,6 @@
 package com.example.mstransactions.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,9 +9,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Document(collection = "transaction")
 @Data
@@ -24,7 +23,7 @@ public class Transaction {
     private String originAccount;
     private String destinationAccount;
     private String transactionType;
-    private LocalDate transactionDate;
+    private LocalDateTime transactionDate;
     private String productId;
     private String productType;
     private Integer quotaNumber;
