@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 public class TransferData extends TransactionData{
     private String originAccount;
     private String destinationAccount;
+    private Boolean withCommission;
 
     public TransferData(String operationType, BigDecimal amount, String transactionDate, String productId, String originAccount, String destinationAccount) {
         super(amount, operationType, transactionDate, productId, ProductTypeEnum.ACCOUNT.getProductType());
@@ -28,5 +29,13 @@ public class TransferData extends TransactionData{
 
     public void setDestinationAccount(String destinationAccount) {
         this.destinationAccount = destinationAccount;
+    }
+
+    public Boolean getWithCommission() {
+        return withCommission;
+    }
+
+    public void setWithCommission(Boolean withCommission) {
+        this.withCommission = withCommission;
     }
 }

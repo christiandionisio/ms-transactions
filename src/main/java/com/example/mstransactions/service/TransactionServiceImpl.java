@@ -58,24 +58,38 @@ public class TransactionServiceImpl implements ITransactionService {
         TransferData transferData = new TransferData(TransactionTypeEnum.DEPOSIT.getTransactionType(), transaction.getAmount(), transaction.getTransactionDate(), transaction.getProductId(),
                 null, null);
 
-        return TransactionUtil.findAccountById(transaction.getProductId()).map(account -> {
-                    BigDecimal actualAmount = account.getBalance();
-                    account.setBalance(actualAmount.add(transaction.getAmount()));
-                    return account;
-                })
-                .flatMap(account2 -> {
+        return TransactionUtil.findAccountById(transaction.getProductId())
+                .flatMap(accountTransition -> {
                     LocalDate localDate = LocalDate.parse(transaction.getTransactionDate(), FORMATTER);
-                    repo.findByTransactionDateBetween(localDate.withDayOfMonth(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant(),
+                    return repo.findByTransactionDateBetween(localDate.withDayOfMonth(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant(),
                             localDate.withDayOfMonth(localDate.getMonth().length(localDate.isLeapYear())).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant())
                             .count()
-                            .map(transaction1 -> {
-                                System.out.println("TEST MAP:" + transaction1);
-                                return transaction1;
-                            })
-                            .subscribe();
-                    System.out.println(account2);
-                    return TransactionUtil.updateAccountBalance(account2)
-                            .flatMap(update -> this.saveOperation(transferData));
+                            .flatMap(numberOfTransactions -> TransactionUtil.findByAccountTypeAndName(accountTransition.getAccountType(), "maximoTransacciones")
+                                    .flatMap(accountConfiguration -> (numberOfTransactions > accountConfiguration.getValue())
+                                                ? Mono.just(true)
+                                                : Mono.just(false))
+                                    .flatMap(isOutOfMaxTransactions -> {
+                                        if (Boolean.TRUE.equals(isOutOfMaxTransactions)) {
+                                            return TransactionUtil.findByAccountTypeAndName(accountTransition.getAccountType(), "commision")
+                                                    .flatMap(accountConfiguration -> {
+                                                        BigDecimal commision = BigDecimal.valueOf(accountConfiguration.getValue()*0.01);
+                                                        BigDecimal commisionAmount = transaction.getAmount().multiply(commision);
+                                                        BigDecimal finalAmount = transaction.getAmount().subtract(commisionAmount);
+                                                        accountTransition.setBalance(accountTransition.getBalance().add(finalAmount));
+                                                        transferData.setWithCommission(true);
+                                                        return Mono.just(accountTransition);
+                                                    });
+                                        } else {
+                                            BigDecimal actualAmount = accountTransition.getBalance();
+                                            accountTransition.setBalance(actualAmount.add(transaction.getAmount()));
+                                            transferData.setWithCommission(false);
+                                            return Mono.just(accountTransition);
+                                        }
+                                    })
+                            )
+                            .flatMap(finalAcount -> TransactionUtil.updateAccountBalance(finalAcount)
+                                    .flatMap(update -> this.saveOperation(transferData))
+                            );
                 });
     }
 
@@ -104,7 +118,9 @@ public class TransactionServiceImpl implements ITransactionService {
                 .originAccount(transferData.getOriginAccount())
                 .destinationAccount(transferData.getDestinationAccount())
                 .productId(transferData.getProductId())
-                .productType(transferData.getProductType()).build();
+                .productType(transferData.getProductType())
+                .withCommission(transferData.getWithCommission())
+                .build();
         return repo.save(saveTransaction);
     }
 
