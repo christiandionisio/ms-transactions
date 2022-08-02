@@ -1,6 +1,5 @@
 package com.example.mstransactions.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,4 +28,5 @@ public class Transaction {
     private Integer quotaNumber;
     private String commerceName;
     private Boolean withCommission;
+    private String commissionAmount;
 }

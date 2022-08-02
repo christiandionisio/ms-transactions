@@ -172,16 +172,28 @@ public class TransactionServiceImpl implements ITransactionService {
         return repo.findAllByProductTypeAndProductId(productType, productId);
     }
 
-    @Override
-    public Flux<Transaction> findTransactionsBetweenRange() {
-        LocalDateTime startDate = LocalDateTime.now().withDayOfMonth(1)
-                .withHour(0).withMinute(0).withSecond(0).withNano(0).minusNanos(1);
+    public Mono<Transaction> transferBetweenAccounts(TransactionDto transactionDto) {
+        TransferData transferData = new TransferData(TransactionTypeEnum.TRANSFER.getTransactionType(),
+                transactionDto.getAmount(), transactionDto.getTransactionDate(), transactionDto.getProductId(),
+                transactionDto.getOriginAccount(), transactionDto.getDestinationAccount());
 
-        LocalDateTime endDate = startDate.plusMonths(1).plusNanos(1);
-        System.out.println("Mes actual con primer dia: " + startDate);
-        System.out.println("Mes actual ultimo dia: " + endDate);
-
-        return repo.findByTransactionDateBetween(startDate, endDate);
+        return TransactionUtil.findAccountById(transferData.getOriginAccount()).flatMap(originAccount -> {
+            BigDecimal actualAmount = originAccount.getBalance();
+            if(actualAmount.compareTo(transactionDto.getAmount()) != -1){
+                originAccount.setBalance(actualAmount.subtract(transactionDto.getAmount()));
+                return TransactionUtil.updateAccountBalance(originAccount)
+                        .flatMap(update -> this.saveOperation(transferData));
+            }else{
+                return Mono.error(new AccountWithInsuficientBalanceException(originAccount.getAccountId()));
+            }
+        })
+        .flatMap(transactionOrigin ->
+            TransactionUtil.findAccountById(transferData.getDestinationAccount()).flatMap(destinationAccount -> {
+                destinationAccount.setBalance(destinationAccount.getBalance().add(transactionDto.getAmount()));
+                return TransactionUtil.updateAccountBalance(destinationAccount)
+                        .flatMap(update -> this.saveOperation(transferData));
+            })
+        );
     }
 
     public Mono<Transaction> saveConsumption(ConsumptionData consumptionData){
@@ -194,5 +206,17 @@ public class TransactionServiceImpl implements ITransactionService {
                 .commerceName(consumptionData.getCommerceName()).build();
 
         return repo.save(saveTransaction);
+    }
+
+    @Override
+    public Flux<Transaction> findTransactionsBetweenRange() {
+        LocalDateTime startDate = LocalDateTime.now().withDayOfMonth(1)
+                .withHour(0).withMinute(0).withSecond(0).withNano(0).minusNanos(1);
+
+        LocalDateTime endDate = startDate.plusMonths(1).plusNanos(1);
+        System.out.println("Mes actual con primer dia: " + startDate);
+        System.out.println("Mes actual ultimo dia: " + endDate);
+
+        return repo.findByTransactionDateBetween(startDate, endDate);
     }
 }

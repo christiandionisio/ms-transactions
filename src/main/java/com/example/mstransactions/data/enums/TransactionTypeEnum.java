@@ -4,7 +4,8 @@ public enum TransactionTypeEnum {
     DEPOSIT("DEPOSIT"),
     WITHDRAWAL("WITHDRAWAL"),
     PAYMENT("PAYMENT"),
-    CONSUMPTION("CONSUMPTION");
+    CONSUMPTION("CONSUMPTION"),
+    TRANSFER("TRANSFER");
     private String transactionType;
     TransactionTypeEnum(String transactionType){
         this.transactionType = transactionType;
