@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
@@ -60,6 +61,7 @@ public class TransactionServiceImpl implements ITransactionService {
         return TransactionUtil.findAccountById(transaction.getProductId())
                 .flatMap(accountTransition -> {
                     LocalDate localDate = LocalDate.parse(transaction.getTransactionDate(), FORMATTER);
+
                     return repo.findByTransactionDateBetween(localDate.withDayOfMonth(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant(),
                             localDate.withDayOfMonth(localDate.getMonth().length(localDate.isLeapYear())).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant())
                             .count()
@@ -105,7 +107,7 @@ public class TransactionServiceImpl implements ITransactionService {
 
     public Mono<Transaction> saveOperation(TransferData transferData){
         Transaction saveTransaction = Transaction.builder()
-                .transactionDate(LocalDate.parse(transferData.getTransactionDate(), FORMATTER))
+                .transactionDate(LocalDate.parse(transferData.getTransactionDate(), FORMATTER).atStartOfDay())
                 .amount(transferData.getAmount())
                 .transactionType(transferData.getTransactionType())
                 .originAccount(transferData.getOriginAccount())
@@ -140,7 +142,7 @@ public class TransactionServiceImpl implements ITransactionService {
 
     public Mono<Transaction> savePayment(PaymentData paymentData){
         Transaction saveTransaction = Transaction.builder()
-                .transactionDate(LocalDate.parse(paymentData.getTransactionDate(), FORMATTER))
+                .transactionDate(LocalDate.parse(paymentData.getTransactionDate(), FORMATTER).atStartOfDay())
                 .amount(paymentData.getAmount())
                 .transactionType(paymentData.getTransactionType())
                 .productId(paymentData.getProductId())
@@ -179,7 +181,6 @@ public class TransactionServiceImpl implements ITransactionService {
         return repo.findAllByProductTypeAndProductId(productType, productId);
     }
 
-    @Override
     public Mono<Transaction> transferBetweenAccounts(TransactionDto transactionDto) {
         TransferData transferData = new TransferData(TransactionTypeEnum.TRANSFER.getTransactionType(),
                 transactionDto.getAmount(), transactionDto.getTransactionDate(), transactionDto.getProductId(),
@@ -206,7 +207,7 @@ public class TransactionServiceImpl implements ITransactionService {
 
     public Mono<Transaction> saveConsumption(ConsumptionData consumptionData){
         Transaction saveTransaction = Transaction.builder()
-                .transactionDate(LocalDate.parse(consumptionData.getTransactionDate(), FORMATTER))
+                .transactionDate(LocalDate.parse(consumptionData.getTransactionDate(), FORMATTER).atStartOfDay())
                 .amount(consumptionData.getAmount())
                 .transactionType(consumptionData.getTransactionType())
                 .productId(consumptionData.getProductId())
@@ -214,5 +215,17 @@ public class TransactionServiceImpl implements ITransactionService {
                 .commerceName(consumptionData.getCommerceName()).build();
 
         return repo.save(saveTransaction);
+    }
+
+    @Override
+    public Flux<Transaction> findTransactionsBetweenRange() {
+        LocalDateTime startDate = LocalDateTime.now().withDayOfMonth(1)
+                .withHour(0).withMinute(0).withSecond(0).withNano(0).minusNanos(1);
+
+        LocalDateTime endDate = startDate.plusMonths(1).plusNanos(1);
+        System.out.println("Mes actual con primer dia: " + startDate);
+        System.out.println("Mes actual ultimo dia: " + endDate);
+
+        return repo.findByTransactionDateBetween(startDate, endDate);
     }
 }

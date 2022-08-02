@@ -8,7 +8,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Document(collection = "transaction")
 @Data
@@ -22,7 +22,7 @@ public class Transaction {
     private String originAccount;
     private String destinationAccount;
     private String transactionType;
-    private LocalDate transactionDate;
+    private LocalDateTime transactionDate;
     private String productId;
     private String productType;
     private Integer quotaNumber;

@@ -167,4 +167,9 @@ public class TransactionController {
                 .defaultIfEmpty(new ResponseEntity<>(new ResponseTemplateDto(null,
                         "Account not found"), HttpStatus.NOT_FOUND));
     }
+
+    @GetMapping("/range")
+    public Flux<Transaction> getTransactionsBetweenRange() {
+        return service.findTransactionsBetweenRange();
+    }
 }

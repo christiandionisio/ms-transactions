@@ -7,6 +7,8 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
+
 public interface ITransactionService {
     Flux<Transaction> findAll();
     public Mono<Transaction> findById(String id);
@@ -24,6 +26,7 @@ public interface ITransactionService {
     Flux<Transaction> findTransactionsByProductId(String productId);
 
     Flux<Transaction> findTransactionsByProductTypeAndProductId(String productType, String productId);
-
     Mono<Transaction> transferBetweenAccounts(TransactionDto transactionDto);
+
+    Flux<Transaction> findTransactionsBetweenRange();
 }
