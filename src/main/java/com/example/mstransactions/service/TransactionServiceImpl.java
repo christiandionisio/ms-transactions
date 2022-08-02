@@ -62,15 +62,16 @@ public class TransactionServiceImpl implements ITransactionService {
                 .flatMap(accountTransition -> {
                     LocalDate localDate = LocalDate.parse(transaction.getTransactionDate(), FORMATTER);
 
-                    return repo.findByTransactionDateBetween(localDate.withDayOfMonth(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant(),
-                            localDate.withDayOfMonth(localDate.getMonth().length(localDate.isLeapYear())).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant())
+                    return repo.findByTransactionDateBetweenAndProductId(localDate.withDayOfMonth(1).atStartOfDay(),
+                            localDate.withDayOfMonth(localDate.getMonth().length(localDate.isLeapYear())).atStartOfDay(),
+                                transaction.getProductId())
                             .count()
                             .flatMap(numberOfTransactions -> TransactionUtil.findByAccountTypeAndName(accountTransition.getAccountType(), "maximoTransacciones")
                                     .flatMap(accountConfiguration -> (numberOfTransactions > accountConfiguration.getValue())
                                                 ? Mono.just(true)
                                                 : Mono.just(false))
                                     .flatMap(isOutOfMaxTransactions ->
-                                            TransactionUtil.setBalanceCommision(isOutOfMaxTransactions, accountTransition,
+                                            TransactionUtil.setBalanceCommisionToDeposit(isOutOfMaxTransactions, accountTransition,
                                                     transaction, transferData)
                                     )
                             )
@@ -85,15 +86,24 @@ public class TransactionServiceImpl implements ITransactionService {
         TransferData transferData = new TransferData(TransactionTypeEnum.WITHDRAWAL.getTransactionType(), transaction.getAmount(), transaction.getTransactionDate(), transaction.getProductId(),
                 null, null);
 
-        return TransactionUtil.findAccountById(transaction.getProductId()).flatMap(account -> {
-            BigDecimal actualAmount = account.getBalance();
-            if(actualAmount.compareTo(transaction.getAmount()) != -1){
-                account.setBalance(actualAmount.subtract(transaction.getAmount()));
-                return TransactionUtil.updateAccountBalance(account)
-                        .flatMap(update -> this.saveOperation(transferData));
-            }else{
-                return Mono.error(new AccountWithInsuficientBalanceException(account.getAccountId()));
-            }
+        return TransactionUtil.findAccountById(transaction.getProductId()).flatMap(accountTransition -> {
+            LocalDate localDate = LocalDate.parse(transaction.getTransactionDate(), FORMATTER);
+            return repo.findByTransactionDateBetweenAndProductId(localDate.withDayOfMonth(1).atStartOfDay(),
+                            localDate.withDayOfMonth(localDate.getMonth().length(localDate.isLeapYear())).atStartOfDay(),
+                            transaction.getProductId())
+                    .count()
+                    .flatMap(numberOfTransactions -> TransactionUtil.findByAccountTypeAndName(accountTransition.getAccountType(), "maximoTransacciones")
+                            .flatMap(accountConfiguration -> (numberOfTransactions > accountConfiguration.getValue())
+                                    ? Mono.just(true)
+                                    : Mono.just(false))
+                            .flatMap(isOutOfMaxTransactions ->
+                                    TransactionUtil.setBalanceCommissionToWithdrawal(isOutOfMaxTransactions, accountTransition,
+                                            transaction, transferData)
+                            )
+                    )
+                    .flatMap(finalAcount -> TransactionUtil.updateAccountBalance(finalAcount)
+                            .flatMap(update -> this.saveOperation(transferData))
+                    );
         });
     }
 
@@ -107,6 +117,7 @@ public class TransactionServiceImpl implements ITransactionService {
                 .productId(transferData.getProductId())
                 .productType(transferData.getProductType())
                 .withCommission(transferData.getWithCommission())
+                .commissionAmount(transferData.getCommissionAmount())
                 .build();
         return repo.save(saveTransaction);
     }
@@ -181,13 +192,12 @@ public class TransactionServiceImpl implements ITransactionService {
             BigDecimal actualAmount = originAccount.getBalance();
             if(actualAmount.compareTo(transactionDto.getAmount()) != -1){
                 originAccount.setBalance(actualAmount.subtract(transactionDto.getAmount()));
-                return TransactionUtil.updateAccountBalance(originAccount)
-                        .flatMap(update -> this.saveOperation(transferData));
+                return TransactionUtil.updateAccountBalance(originAccount);
             }else{
                 return Mono.error(new AccountWithInsuficientBalanceException(originAccount.getAccountId()));
             }
         })
-        .flatMap(transactionOrigin ->
+        .flatMap(accountOriginUpdated ->
             TransactionUtil.findAccountById(transferData.getDestinationAccount()).flatMap(destinationAccount -> {
                 destinationAccount.setBalance(destinationAccount.getBalance().add(transactionDto.getAmount()));
                 return TransactionUtil.updateAccountBalance(destinationAccount)
