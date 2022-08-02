@@ -11,5 +11,6 @@ public interface TransactionRepo extends ReactiveMongoRepository<Transaction, St
     Mono<Long> countTransactionsByProductId(String productId);
     Flux<Transaction> findAllByProductId(String productId);
     Flux<Transaction> findAllByProductTypeAndProductId(String productType, String productId);
+    Flux<Transaction> findByTransactionDateBetween(LocalDateTime startDate, LocalDateTime endDate);
     Flux<Transaction> findByTransactionDateBetweenAndProductId(LocalDateTime startDate, LocalDateTime endDate, String productId);
 }
