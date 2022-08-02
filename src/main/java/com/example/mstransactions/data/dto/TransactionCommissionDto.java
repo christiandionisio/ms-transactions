@@ -11,5 +11,5 @@ public class TransactionCommissionDto {
     private String transactionType;
     private LocalDateTime transactionDate;
     private String productType;
-    private String commissionAmount;
+    private BigDecimal commissionAmount;
 }
