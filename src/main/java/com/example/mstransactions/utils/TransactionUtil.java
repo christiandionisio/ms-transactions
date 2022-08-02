@@ -7,6 +7,7 @@ import com.example.mstransactions.data.CreditCard;
 import com.example.mstransactions.data.dto.TransactionDto;
 import com.example.mstransactions.data.dto.TransferData;
 import com.example.mstransactions.error.AccountNotFoundException;
+import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
 import com.example.mstransactions.error.CreditCardNotFoundException;
 import com.example.mstransactions.error.CreditNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -77,8 +78,8 @@ public class TransactionUtil {
                 .bodyToMono(AccountConfiguration.class);
     }
 
-    public static Mono<Account> setBalanceCommision(Boolean isOutOfMaxTransactions, Account accountTransition,
-                                                    TransactionDto transaction, TransferData transferData) {
+    public static Mono<Account> setBalanceCommisionToDeposit(Boolean isOutOfMaxTransactions, Account accountTransition,
+                                                             TransactionDto transaction, TransferData transferData) {
         if (Boolean.TRUE.equals(isOutOfMaxTransactions)) {
             return TransactionUtil.findByAccountTypeAndName(accountTransition.getAccountType(), "commision")
                     .flatMap(accountConfiguration -> {
@@ -86,6 +87,7 @@ public class TransactionUtil {
                         BigDecimal commisionAmount = transaction.getAmount().multiply(commision);
                         BigDecimal finalAmount = transaction.getAmount().subtract(commisionAmount);
                         accountTransition.setBalance(accountTransition.getBalance().add(finalAmount));
+                        transferData.setCommissionAmount(commisionAmount);
                         transferData.setWithCommission(true);
                         return Mono.just(accountTransition);
                     });
@@ -96,4 +98,36 @@ public class TransactionUtil {
             return Mono.just(accountTransition);
         }
     }
+
+    public static Mono<Account> setBalanceCommissionToWithdrawal(Boolean isOutOfMaxTransactions, Account accountTransition,
+                                                                 TransactionDto transaction, TransferData transferData) {
+        if (Boolean.TRUE.equals(isOutOfMaxTransactions)) {
+            return TransactionUtil.findByAccountTypeAndName(accountTransition.getAccountType(), "commision")
+                    .flatMap(accountConfiguration -> {
+                        BigDecimal commission = BigDecimal.valueOf(accountConfiguration.getValue()*0.01);
+                        BigDecimal commissionAmount = transaction.getAmount().multiply(commission);
+                        BigDecimal finalAmount = transaction.getAmount().add(commissionAmount);
+                        if(accountTransition.getBalance().compareTo(finalAmount) != -1) {
+                            accountTransition.setBalance(accountTransition.getBalance().subtract(finalAmount));
+                            transferData.setCommissionAmount(commissionAmount);
+                            transferData.setWithCommission(true);
+                            return Mono.just(accountTransition);
+                        } else {
+                            return Mono.error(new AccountWithInsuficientBalanceException(accountTransition.getAccountId()));
+                        }
+
+                    });
+        } else {
+            BigDecimal actualAmount = transaction.getAmount();
+            if(accountTransition.getBalance().compareTo(actualAmount) != -1) {
+                accountTransition.setBalance(accountTransition.getBalance().subtract(actualAmount));
+                transferData.setWithCommission(false);
+                return Mono.just(accountTransition);
+            } else {
+                return Mono.error(new AccountWithInsuficientBalanceException(accountTransition.getAccountId()));
+            }
+        }
+    }
+
 }
+

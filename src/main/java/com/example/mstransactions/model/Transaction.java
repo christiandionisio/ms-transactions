@@ -28,5 +28,5 @@ public class Transaction {
     private Integer quotaNumber;
     private String commerceName;
     private Boolean withCommission;
-    private String commissionAmount;
+    private BigDecimal commissionAmount;
 }
