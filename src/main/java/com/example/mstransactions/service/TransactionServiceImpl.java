@@ -62,8 +62,9 @@ public class TransactionServiceImpl implements ITransactionService {
                 .flatMap(accountTransition -> {
                     LocalDate localDate = LocalDate.parse(transaction.getTransactionDate(), FORMATTER);
 
-                    return repo.findByTransactionDateBetween(localDate.withDayOfMonth(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant(),
-                            localDate.withDayOfMonth(localDate.getMonth().length(localDate.isLeapYear())).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant())
+                    return repo.findByTransactionDateBetweenAndProductId(localDate.withDayOfMonth(1).atStartOfDay(),
+                            localDate.withDayOfMonth(localDate.getMonth().length(localDate.isLeapYear())).atStartOfDay(),
+                                transaction.getProductId())
                             .count()
                             .flatMap(numberOfTransactions -> TransactionUtil.findByAccountTypeAndName(accountTransition.getAccountType(), "maximoTransacciones")
                                     .flatMap(accountConfiguration -> (numberOfTransactions > accountConfiguration.getValue())
@@ -87,8 +88,9 @@ public class TransactionServiceImpl implements ITransactionService {
 
         return TransactionUtil.findAccountById(transaction.getProductId()).flatMap(accountTransition -> {
             LocalDate localDate = LocalDate.parse(transaction.getTransactionDate(), FORMATTER);
-            return repo.findByTransactionDateBetween(localDate.withDayOfMonth(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant(),
-                            localDate.withDayOfMonth(localDate.getMonth().length(localDate.isLeapYear())).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant())
+            return repo.findByTransactionDateBetweenAndProductId(localDate.withDayOfMonth(1).atStartOfDay(),
+                            localDate.withDayOfMonth(localDate.getMonth().length(localDate.isLeapYear())).atStartOfDay(),
+                            transaction.getProductId())
                     .count()
                     .flatMap(numberOfTransactions -> TransactionUtil.findByAccountTypeAndName(accountTransition.getAccountType(), "maximoTransacciones")
                             .flatMap(accountConfiguration -> (numberOfTransactions > accountConfiguration.getValue())
