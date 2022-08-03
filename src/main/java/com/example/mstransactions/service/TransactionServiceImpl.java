@@ -246,9 +246,10 @@ public class TransactionServiceImpl implements ITransactionService {
     public Mono<DailyBalanceTemplateResponse> getDailyBalanceTemplate(String customerId) {
         DailyBalanceTemplateResponse dailyBalanceTemplateResponse = new DailyBalanceTemplateResponse();
         dailyBalanceTemplateResponse.setAccountDailyBalanceDtoList(new ArrayList<>());
+        dailyBalanceTemplateResponse.setCreditCardDailyBalanceDtoList(new ArrayList<>());
+        long daysBetween = ChronoUnit.DAYS.between(LocalDate.now().withDayOfMonth(1), LocalDateTime.now());
         return TransactionUtil.findAccountByCustomerId(customerId)
                 .map(account -> {
-                    long daysBetween = ChronoUnit.DAYS.between(LocalDate.now().withDayOfMonth(1), LocalDateTime.now());
                     AccountDailyBalanceDto accountDailyBalanceDto = new AccountDailyBalanceDto(account.getAccountId(),
                             account.getBalance().divide(BigDecimal.valueOf(daysBetween), 2, RoundingMode.HALF_UP),
                             account.getBalance());
@@ -256,6 +257,15 @@ public class TransactionServiceImpl implements ITransactionService {
                     return account;
                 })
                 .collectList()
+                .flatMap(accounts -> TransactionUtil.findCreditCardByCustomerId(customerId)
+                        .map(creditCard -> {
+                            CreditCardDailyBalanceDto creditCardDailyBalanceDto = new CreditCardDailyBalanceDto(creditCard.getCreditCardId(),
+                                    creditCard.getCreditLimit().divide(BigDecimal.valueOf(daysBetween), 2, RoundingMode.HALF_UP),
+                                    creditCard.getCreditLimit());
+                            dailyBalanceTemplateResponse.getCreditCardDailyBalanceDtoList().add(creditCardDailyBalanceDto);
+                            return creditCard;
+                        }).collectList()
+                )
                 .flatMap(finalAccount -> Mono.just(dailyBalanceTemplateResponse));
     }
 
