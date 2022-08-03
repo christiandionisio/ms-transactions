@@ -271,6 +271,9 @@ public class TransactionServiceImpl implements ITransactionService {
                     return account;
                 })
                 .collectList()
+                .transform(it -> circuitBreakerFactory.create("account-service").run(it,
+                        throwable -> Mono.error(new AccountServiceNotAvailableException()))
+                )
                 .flatMap(accounts -> TransactionUtil.findCreditCardByCustomerId(customerId)
                         .map(creditCard -> {
                             CreditCardDailyBalanceDto creditCardDailyBalanceDto = new CreditCardDailyBalanceDto(creditCard.getCreditCardId(),
@@ -279,6 +282,9 @@ public class TransactionServiceImpl implements ITransactionService {
                             dailyBalanceTemplateResponse.getCreditCardDailyBalanceDtoList().add(creditCardDailyBalanceDto);
                             return creditCard;
                         }).collectList()
+                        .transform(it -> circuitBreakerFactory.create("credit-card-service").run(it,
+                                throwable -> Mono.error(new CreditCardServiceNotAvailableException()))
+                        )
                 )
                 .flatMap(creditCards -> TransactionUtil.findCreditByCustomerId(customerId)
                         .map(credit -> {
@@ -288,6 +294,9 @@ public class TransactionServiceImpl implements ITransactionService {
                             dailyBalanceTemplateResponse.getCreditDailyBalanceDtoList().add(creditDailyBalanceDto);
                             return credit;
                         }).collectList()
+                        .transform(it -> circuitBreakerFactory.create("credit-service").run(it,
+                                throwable -> Mono.error(new CreditServiceNotAvailableException()))
+                        )
                 )
                 .flatMap(finalResponse -> Mono.just(dailyBalanceTemplateResponse));
     }
