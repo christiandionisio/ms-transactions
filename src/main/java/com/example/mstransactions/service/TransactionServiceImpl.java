@@ -1,5 +1,6 @@
 package com.example.mstransactions.service;
 
+import com.example.mstransactions.data.Account;
 import com.example.mstransactions.data.dto.*;
 import com.example.mstransactions.data.enums.TransactionTypeEnum;
 import com.example.mstransactions.error.*;
@@ -7,6 +8,7 @@ import com.example.mstransactions.model.Transaction;
 import com.example.mstransactions.repo.TransactionRepo;
 import com.example.mstransactions.utils.TransactionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreakerFactory;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -24,6 +26,9 @@ public class TransactionServiceImpl implements ITransactionService {
 
     @Autowired
     private TransactionRepo repo;
+
+    @Autowired
+    private ReactiveCircuitBreakerFactory circuitBreakerFactory;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -199,12 +204,18 @@ public class TransactionServiceImpl implements ITransactionService {
                 return Mono.error(new AccountWithInsuficientBalanceException(originAccount.getAccountId()));
             }
         })
+        .transform(it -> circuitBreakerFactory.create("account-service").run(it,
+                throwable -> Mono.error(new AccountServiceNotAvailableException()))
+        )
         .flatMap(accountOriginUpdated ->
             TransactionUtil.findAccountById(transferData.getDestinationAccount()).flatMap(destinationAccount -> {
                 destinationAccount.setBalance(destinationAccount.getBalance().add(transactionDto.getAmount()));
                 return TransactionUtil.updateAccountBalance(destinationAccount)
                         .flatMap(update -> this.saveOperation(transferData));
             })
+        )
+        .transform(it -> circuitBreakerFactory.create("account-service").run(it,
+                throwable -> Mono.error(new AccountServiceNotAvailableException()))
         );
     }
 

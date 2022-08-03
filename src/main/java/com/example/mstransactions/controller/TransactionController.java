@@ -161,6 +161,8 @@ public class TransactionController {
                         return Mono.just(new ResponseEntity<>(new ResponseTemplateDto(null,
                                 e.getMessage()), HttpStatus.FORBIDDEN));
                     }
+                    logger.error(e.getClass().getName());
+                    logger.error(e.getMessage());
                     return Mono.just(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
                 })
                 .defaultIfEmpty(new ResponseEntity<>(new ResponseTemplateDto(null,
