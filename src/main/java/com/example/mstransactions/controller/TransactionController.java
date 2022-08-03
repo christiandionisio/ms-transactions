@@ -1,9 +1,6 @@
 package com.example.mstransactions.controller;
 
-import com.example.mstransactions.data.dto.FilterDto;
-import com.example.mstransactions.data.dto.ResponseTemplateDto;
-import com.example.mstransactions.data.dto.TransactionCommissionDto;
-import com.example.mstransactions.data.dto.TransactionDto;
+import com.example.mstransactions.data.dto.*;
 import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
 import com.example.mstransactions.error.CreditAmountToPayInvalidException;
 import com.example.mstransactions.error.CreditCardWithInsuficientBalanceException;
@@ -179,5 +176,15 @@ public class TransactionController {
     public Mono<ResponseEntity<Object>> findCommissionsByProductId(@RequestBody FilterDto filterDto){
         return Mono.just(ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON_UTF8)
 				.body(service.getTransactionsWithCommissions(filterDto)));
+    }
+
+    @GetMapping("/averageDailyBalance/{customerId}")
+    public Mono<ResponseEntity<DailyBalanceTemplateResponse>> getAverageDailyBalance(@PathVariable String customerId) {
+        return service.getDailyBalanceTemplate(customerId)
+                .flatMap(dailyBalanceTemplate -> {
+                    ResponseEntity<DailyBalanceTemplateResponse> response = ResponseEntity.ok(dailyBalanceTemplate);
+                    return Mono.just(response);
+                })
+                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 }

@@ -12,10 +12,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 
 @Service
 public class TransactionServiceImpl implements ITransactionService {
@@ -238,6 +240,23 @@ public class TransactionServiceImpl implements ITransactionService {
         Flux<TransactionCommissionDto> flux = repo.findByProductIdAndTransactionDateBetweenAndWithCommissionIsTrue(filterDto.getProductId(), startDate, endDate)
                 .map(transaction -> createTransactionCommissionDto(transaction));
         return flux;
+    }
+
+    @Override
+    public Mono<DailyBalanceTemplateResponse> getDailyBalanceTemplate(String customerId) {
+        DailyBalanceTemplateResponse dailyBalanceTemplateResponse = new DailyBalanceTemplateResponse();
+        dailyBalanceTemplateResponse.setAccountDailyBalanceDtoList(new ArrayList<>());
+        return TransactionUtil.findAccountByCustomerId(customerId)
+                .map(account -> {
+                    long daysBetween = ChronoUnit.DAYS.between(LocalDate.now().withDayOfMonth(1), LocalDateTime.now());
+                    AccountDailyBalanceDto accountDailyBalanceDto = new AccountDailyBalanceDto(account.getAccountId(),
+                            account.getBalance().divide(BigDecimal.valueOf(daysBetween), 2, RoundingMode.HALF_UP),
+                            account.getBalance());
+                    dailyBalanceTemplateResponse.getAccountDailyBalanceDtoList().add(accountDailyBalanceDto);
+                    return account;
+                })
+                .collectList()
+                .flatMap(finalAccount -> Mono.just(dailyBalanceTemplateResponse));
     }
 
     public TransactionCommissionDto createTransactionCommissionDto(Transaction transaction){

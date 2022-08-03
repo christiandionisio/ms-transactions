@@ -13,6 +13,7 @@ import com.example.mstransactions.error.CreditNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
@@ -127,6 +128,28 @@ public class TransactionUtil {
                 return Mono.error(new AccountWithInsuficientBalanceException(accountTransition.getAccountId()));
             }
         }
+    }
+
+    public static Flux<Account> findAccountByCustomerId(String customerId) {
+        return WebClient.create().get()
+                .uri("http://localhost:9083/accounts/findByCustomerOwnerId/" + customerId)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .onStatus(HttpStatus::is4xxClientError, response ->
+                        Mono.error(new AccountNotFoundException(customerId))
+                )
+                .bodyToFlux(Account.class);
+    }
+
+    public static Flux<CreditCard> findCreditCardByCustomerId(String customerId) {
+        return WebClient.create().get()
+                .uri("http://localhost:9084/credit-cards/findByCustomerId/" + customerId)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .onStatus(HttpStatus::is4xxClientError, response ->
+                        Mono.error(new AccountNotFoundException(customerId))
+                )
+                .bodyToFlux(CreditCard.class);
     }
 
 }

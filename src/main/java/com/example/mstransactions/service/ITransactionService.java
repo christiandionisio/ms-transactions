@@ -1,5 +1,6 @@
 package com.example.mstransactions.service;
 
+import com.example.mstransactions.data.dto.DailyBalanceTemplateResponse;
 import com.example.mstransactions.data.dto.FilterDto;
 import com.example.mstransactions.data.dto.TransactionCommissionDto;
 import com.example.mstransactions.data.dto.TransactionDto;
@@ -35,4 +36,6 @@ public interface ITransactionService {
     Flux<Transaction> findTransactionsBetweenRange();
 
     Flux<TransactionCommissionDto> getTransactionsWithCommissions(FilterDto filterDto);
+
+    Mono<DailyBalanceTemplateResponse> getDailyBalanceTemplate(String customerId);
 }
