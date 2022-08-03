@@ -24,5 +24,21 @@ resilience4j.circuitbreaker:
       waitDurationInOpenState: 50s
       permittedNumberOfCallsInHalfOpenState: 3
 
+    credit-card-service:
+      failureRateThreshold: 50
+      minimumNumberOfCalls: 20
+      slidingWindowType: TIME_BASED
+      slidingWindowSize: 10
+      waitDurationInOpenState: 50s
+      permittedNumberOfCallsInHalfOpenState: 3
+
+    credit-service:
+      failureRateThreshold: 50
+      minimumNumberOfCalls: 20
+      slidingWindowType: TIME_BASED
+      slidingWindowSize: 10
+      waitDurationInOpenState: 50s
+      permittedNumberOfCallsInHalfOpenState: 3
+
 
 
