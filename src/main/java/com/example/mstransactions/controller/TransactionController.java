@@ -187,6 +187,11 @@ public class TransactionController {
                     ResponseEntity<DailyBalanceTemplateResponse> response = ResponseEntity.ok(dailyBalanceTemplate);
                     return Mono.just(response);
                 })
+                .onErrorResume(e -> {
+                    logger.error(e.getClass().getName());
+                    logger.error(e.getMessage());
+                    return Mono.just(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+                })
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 }
