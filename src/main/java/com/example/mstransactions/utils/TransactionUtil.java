@@ -152,5 +152,16 @@ public class TransactionUtil {
                 .bodyToFlux(CreditCard.class);
     }
 
+    public static Flux<Credit> findCreditByCustomerId(String customerId) {
+        return WebClient.create().get()
+                .uri("http://localhost:9085/credits/findByCustomerId/" + customerId)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .onStatus(HttpStatus::is4xxClientError, response ->
+                        Mono.error(new AccountNotFoundException(customerId))
+                )
+                .bodyToFlux(Credit.class);
+    }
+
 }
 

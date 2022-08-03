@@ -247,7 +247,10 @@ public class TransactionServiceImpl implements ITransactionService {
         DailyBalanceTemplateResponse dailyBalanceTemplateResponse = new DailyBalanceTemplateResponse();
         dailyBalanceTemplateResponse.setAccountDailyBalanceDtoList(new ArrayList<>());
         dailyBalanceTemplateResponse.setCreditCardDailyBalanceDtoList(new ArrayList<>());
+        dailyBalanceTemplateResponse.setCreditDailyBalanceDtoList(new ArrayList<>());
+
         long daysBetween = ChronoUnit.DAYS.between(LocalDate.now().withDayOfMonth(1), LocalDateTime.now());
+
         return TransactionUtil.findAccountByCustomerId(customerId)
                 .map(account -> {
                     AccountDailyBalanceDto accountDailyBalanceDto = new AccountDailyBalanceDto(account.getAccountId(),
@@ -266,7 +269,16 @@ public class TransactionServiceImpl implements ITransactionService {
                             return creditCard;
                         }).collectList()
                 )
-                .flatMap(finalAccount -> Mono.just(dailyBalanceTemplateResponse));
+                .flatMap(creditCards -> TransactionUtil.findCreditByCustomerId(customerId)
+                        .map(credit -> {
+                            CreditDailyBalanceDto creditDailyBalanceDto = new CreditDailyBalanceDto(credit.getCreditId(),
+                                    credit.getCreditBalance().divide(BigDecimal.valueOf(daysBetween), 2, RoundingMode.HALF_UP),
+                                    credit.getCreditBalance());
+                            dailyBalanceTemplateResponse.getCreditDailyBalanceDtoList().add(creditDailyBalanceDto);
+                            return credit;
+                        }).collectList()
+                )
+                .flatMap(finalResponse -> Mono.just(dailyBalanceTemplateResponse));
     }
 
     public TransactionCommissionDto createTransactionCommissionDto(Transaction transaction){

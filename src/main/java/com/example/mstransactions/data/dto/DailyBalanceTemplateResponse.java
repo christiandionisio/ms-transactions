@@ -8,4 +8,5 @@ import java.util.List;
 public class DailyBalanceTemplateResponse {
     private List<AccountDailyBalanceDto> accountDailyBalanceDtoList;
     private List<CreditCardDailyBalanceDto> creditCardDailyBalanceDtoList;
+    private List<CreditDailyBalanceDto> creditDailyBalanceDtoList;
 }
