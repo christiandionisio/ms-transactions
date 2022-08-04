@@ -9,6 +9,8 @@ import com.example.mstransactions.model.Transaction;
 import com.example.mstransactions.service.ITransactionService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.modelmapper.ModelMapper;
+import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,6 +30,11 @@ public class TransactionController {
 
     private static final Logger logger = LogManager.getLogger(TransactionController.class);
 
+    private ModelMapper modelMapper = new ModelMapper();
+
+    private static String uriTransaction = "http://localhost:8086/transactions/";
+    private static final String ACCOUNT_NOT_FOUND_MESSAGE = "Account not found";
+
     @GetMapping
     public Flux<Transaction> findAll() {
         logger.debug("Debugging log");
@@ -40,18 +47,19 @@ public class TransactionController {
 
     @GetMapping("/{id}")
     public Mono<Transaction> read(@PathVariable String id) {
-        Mono<Transaction> transaction = service.findById(id);
-        return transaction;
+        return service.findById(id);
     }
 
     @PostMapping
-    public Mono<Transaction> create(@RequestBody Transaction transaction) {
-        return service.create(transaction);
+    public Mono<Transaction> create(@RequestBody TransactionDto transactionDto) {
+        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+        return service.create(modelMapper.map(transactionDto, Transaction.class));
     }
 
     @PutMapping
-    public Mono<Transaction> update(@RequestBody Transaction transaction) {
-        return service.update(transaction);
+    public Mono<Transaction> update(@RequestBody TransactionDto transactionDto) {
+        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+        return service.update(modelMapper.map(transactionDto, Transaction.class));
     }
 
     @DeleteMapping
@@ -63,20 +71,20 @@ public class TransactionController {
     public Mono<ResponseEntity<Object>> makeDeposit(@RequestBody TransactionDto transaction) {
         return service.makeDeposit(transaction)
                 .flatMap(deposit -> {
-                    ResponseEntity<Object> response = ResponseEntity.created(URI.create("http://localhost:8086/transactions/".concat(deposit.getTransactionId())))
+                    ResponseEntity<Object> response = ResponseEntity.created(URI.create(uriTransaction.concat(deposit.getTransactionId())))
                             .contentType(MediaType.APPLICATION_JSON)
                             .body(deposit);
                     return Mono.just(response);
                 })
                 .defaultIfEmpty(new ResponseEntity<>(new ResponseTemplateDto(null,
-                        "Account not found"), HttpStatus.NOT_FOUND));
+                        ACCOUNT_NOT_FOUND_MESSAGE), HttpStatus.NOT_FOUND));
     }
 
     @PostMapping("/withdrawal")
     public Mono<ResponseEntity<Object>> makeWithdrawal(@RequestBody TransactionDto transaction) {
         return service.makeWithdrawal(transaction)
                 .flatMap(deposit -> {
-                    ResponseEntity<Object> response = ResponseEntity.created(URI.create("http://localhost:8086/transactions/".concat(deposit.getTransactionId())))
+                    ResponseEntity<Object> response = ResponseEntity.created(URI.create(uriTransaction.concat(deposit.getTransactionId())))
                             .contentType(MediaType.APPLICATION_JSON)
                             .body(deposit);
                     return Mono.just(response);
@@ -90,14 +98,14 @@ public class TransactionController {
                     return Mono.just(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
                 })
                 .defaultIfEmpty(new ResponseEntity<>(new ResponseTemplateDto(null,
-                        "Account not found"), HttpStatus.NOT_FOUND));
+                        ACCOUNT_NOT_FOUND_MESSAGE), HttpStatus.NOT_FOUND));
     }
 
     @PostMapping("/payment")
     public Mono<ResponseEntity<Object>> makePayment(@RequestBody TransactionDto transaction) {
         return service.makePayment(transaction)
                 .flatMap(payment -> {
-                    ResponseEntity<Object> response = ResponseEntity.created(URI.create("http://localhost:8086/transactions/".concat(payment.getTransactionId())))
+                    ResponseEntity<Object> response = ResponseEntity.created(URI.create(uriTransaction.concat(payment.getTransactionId())))
                             .contentType(MediaType.APPLICATION_JSON)
                             .body(payment);
                     return Mono.just(response);
@@ -119,7 +127,7 @@ public class TransactionController {
     public Mono<ResponseEntity<Object>> makeConsumption(@RequestBody TransactionDto transaction) {
         return service.makeConsumption(transaction)
                 .flatMap(payment -> {
-                    ResponseEntity<Object> response = ResponseEntity.created(URI.create("http://localhost:8086/transactions/".concat(payment.getTransactionId())))
+                    ResponseEntity<Object> response = ResponseEntity.created(URI.create(uriTransaction.concat(payment.getTransactionId())))
                             .contentType(MediaType.APPLICATION_JSON)
                             .body(payment);
                     return Mono.just(response);
@@ -151,7 +159,7 @@ public class TransactionController {
     public Mono<ResponseEntity<Object>> transferBetweenAccounts(@RequestBody TransactionDto transaction) {
         return service.transferBetweenAccounts(transaction)
                 .flatMap(payment -> {
-                    ResponseEntity<Object> response = ResponseEntity.created(URI.create("http://localhost:8086/transactions/".concat(payment.getTransactionId())))
+                    ResponseEntity<Object> response = ResponseEntity.created(URI.create(uriTransaction.concat(payment.getTransactionId())))
                             .contentType(MediaType.APPLICATION_JSON)
                             .body(payment);
                     return Mono.just(response);
@@ -166,7 +174,7 @@ public class TransactionController {
                     return Mono.just(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
                 })
                 .defaultIfEmpty(new ResponseEntity<>(new ResponseTemplateDto(null,
-                        "Account not found"), HttpStatus.NOT_FOUND));
+                        ACCOUNT_NOT_FOUND_MESSAGE), HttpStatus.NOT_FOUND));
     }
 
     @GetMapping("/range")

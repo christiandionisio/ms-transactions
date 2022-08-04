@@ -19,6 +19,11 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 
 public class TransactionUtil {
+
+    private TransactionUtil() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static Mono<Account> findAccountById(String id) {
         return WebClient.create().get()
                 .uri("http://localhost:9083/accounts/" + id)

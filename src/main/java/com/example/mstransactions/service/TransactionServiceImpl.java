@@ -1,6 +1,5 @@
 package com.example.mstransactions.service;
 
-import com.example.mstransactions.data.Account;
 import com.example.mstransactions.data.dto.*;
 import com.example.mstransactions.data.enums.TransactionTypeEnum;
 import com.example.mstransactions.error.*;
@@ -34,6 +33,8 @@ public class TransactionServiceImpl implements ITransactionService {
 
     private static final DateTimeFormatter FORMATTER_DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    private static final String ACCOUNT_SERVICE_NAME = "account-service";
+
 
     @Override
     public Flux<Transaction> findAll() {
@@ -62,12 +63,12 @@ public class TransactionServiceImpl implements ITransactionService {
 
     @Override
     public Mono<Transaction> makeDeposit(TransactionDto transaction) {
-        TransferData transferData = new TransferData(TransactionTypeEnum.DEPOSIT.getTransactionType(), transaction.getAmount(), transaction.getTransactionDate(), transaction.getProductId(),
+        TransferData transferData = new TransferData(TransactionTypeEnum.DEPOSIT.getTransactionType(), transaction.getAmount(), String.valueOf(transaction.getTransactionDate()), transaction.getProductId(),
                 null, null);
 
         return TransactionUtil.findAccountById(transaction.getProductId())
                 .flatMap(accountTransition -> {
-                    LocalDate localDate = LocalDate.parse(transaction.getTransactionDate(), FORMATTER);
+                    LocalDate localDate = LocalDate.parse(String.valueOf(transaction.getTransactionDate()), FORMATTER);
 
                     return repo.findByTransactionDateBetweenAndProductId(localDate.withDayOfMonth(1).atStartOfDay(),
                             localDate.withDayOfMonth(localDate.getMonth().length(localDate.isLeapYear())).atStartOfDay(),
@@ -90,11 +91,11 @@ public class TransactionServiceImpl implements ITransactionService {
 
     @Override
     public Mono<Transaction> makeWithdrawal(TransactionDto transaction) {
-        TransferData transferData = new TransferData(TransactionTypeEnum.WITHDRAWAL.getTransactionType(), transaction.getAmount(), transaction.getTransactionDate(), transaction.getProductId(),
+        TransferData transferData = new TransferData(TransactionTypeEnum.WITHDRAWAL.getTransactionType(), transaction.getAmount(), String.valueOf(transaction.getTransactionDate()), transaction.getProductId(),
                 null, null);
 
         return TransactionUtil.findAccountById(transaction.getProductId()).flatMap(accountTransition -> {
-            LocalDate localDate = LocalDate.parse(transaction.getTransactionDate(), FORMATTER);
+            LocalDate localDate = LocalDate.parse(String.valueOf(transaction.getTransactionDate()), FORMATTER);
             return repo.findByTransactionDateBetweenAndProductId(localDate.withDayOfMonth(1).atStartOfDay(),
                             localDate.withDayOfMonth(localDate.getMonth().length(localDate.isLeapYear())).atStartOfDay(),
                             transaction.getProductId())
@@ -140,7 +141,7 @@ public class TransactionServiceImpl implements ITransactionService {
                                 if(quotaNumber.equals(credit.getTimeLimit() + 1)){
                                     return Mono.error(new CreditPaymentAlreadyCompletedException(credit.getCreditId(), credit.getTimeLimit()));
                                 }
-                                PaymentData paymentData = new PaymentData(transactionDto.getAmount(), transactionDto.getTransactionDate(), transactionDto.getProductId(), quotaNumber);
+                                PaymentData paymentData = new PaymentData(transactionDto.getAmount(), String.valueOf(transactionDto.getTransactionDate()), transactionDto.getProductId(), quotaNumber);
                                 return this.savePayment(paymentData);
                             });
                 }else{
@@ -163,7 +164,7 @@ public class TransactionServiceImpl implements ITransactionService {
 
     @Override
     public Mono<Transaction> makeConsumption(TransactionDto transaction) {
-        ConsumptionData consumptionData = new ConsumptionData(transaction.getAmount(), transaction.getTransactionDate(), transaction.getProductId(),
+        ConsumptionData consumptionData = new ConsumptionData(transaction.getAmount(), String.valueOf(transaction.getTransactionDate()), transaction.getProductId(),
                transaction.getCommerceName());
 
         return TransactionUtil.findCreditCardById(transaction.getProductId()).flatMap(creditCard -> {
@@ -192,7 +193,7 @@ public class TransactionServiceImpl implements ITransactionService {
 
     public Mono<Transaction> transferBetweenAccounts(TransactionDto transactionDto) {
         TransferData transferData = new TransferData(TransactionTypeEnum.TRANSFER.getTransactionType(),
-                transactionDto.getAmount(), transactionDto.getTransactionDate(), transactionDto.getProductId(),
+                transactionDto.getAmount(), String.valueOf(transactionDto.getTransactionDate()), transactionDto.getProductId(),
                 transactionDto.getOriginAccount(), transactionDto.getDestinationAccount());
 
         return TransactionUtil.findAccountById(transferData.getOriginAccount()).flatMap(originAccount -> {
@@ -204,7 +205,7 @@ public class TransactionServiceImpl implements ITransactionService {
                 return Mono.error(new AccountWithInsuficientBalanceException(originAccount.getAccountId()));
             }
         })
-        .transform(it -> circuitBreakerFactory.create("account-service").run(it,
+        .transform(it -> circuitBreakerFactory.create(ACCOUNT_SERVICE_NAME).run(it,
                 throwable -> Mono.error(new AccountServiceNotAvailableException()))
         )
         .flatMap(accountOriginUpdated ->
@@ -214,7 +215,7 @@ public class TransactionServiceImpl implements ITransactionService {
                         .flatMap(update -> this.saveOperation(transferData));
             })
         )
-        .transform(it -> circuitBreakerFactory.create("account-service").run(it,
+        .transform(it -> circuitBreakerFactory.create(ACCOUNT_SERVICE_NAME).run(it,
                 throwable -> Mono.error(new AccountServiceNotAvailableException()))
         );
     }
@@ -237,8 +238,6 @@ public class TransactionServiceImpl implements ITransactionService {
                 .withHour(0).withMinute(0).withSecond(0).withNano(0).minusNanos(1);
 
         LocalDateTime endDate = startDate.plusMonths(1).plusNanos(1);
-        System.out.println("Mes actual con primer dia: " + startDate);
-        System.out.println("Mes actual ultimo dia: " + endDate);
 
         return repo.findByTransactionDateBetween(startDate, endDate);
     }
@@ -248,9 +247,8 @@ public class TransactionServiceImpl implements ITransactionService {
         LocalDateTime startDate = LocalDateTime.parse(filterDto.getStartDate(), FORMATTER_DATE_TIME).minusSeconds(1);
         LocalDateTime endDate = LocalDateTime.parse(filterDto.getEndDate(), FORMATTER_DATE_TIME).plusSeconds(1);
 
-        Flux<TransactionCommissionDto> flux = repo.findByProductIdAndTransactionDateBetweenAndWithCommissionIsTrue(filterDto.getProductId(), startDate, endDate)
-                .map(transaction -> createTransactionCommissionDto(transaction));
-        return flux;
+        return repo.findByProductIdAndTransactionDateBetweenAndWithCommissionIsTrue(filterDto.getProductId(), startDate, endDate)
+                .map(this::createTransactionCommissionDto);
     }
 
     @Override
@@ -271,7 +269,7 @@ public class TransactionServiceImpl implements ITransactionService {
                     return account;
                 })
                 .collectList()
-                .transform(it -> circuitBreakerFactory.create("account-service").run(it,
+                .transform(it -> circuitBreakerFactory.create(ACCOUNT_SERVICE_NAME).run(it,
                         throwable -> Mono.error(new AccountServiceNotAvailableException()))
                 )
                 .flatMap(accounts -> TransactionUtil.findCreditCardByCustomerId(customerId)
