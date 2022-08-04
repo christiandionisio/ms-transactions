@@ -7,9 +7,7 @@ spring:
   cloud:
     config:
       name: ms-transactions
-      discovery:
-        enabled: true
-        service-id: ms-config-server
+      uri: http://ms-config-server:8081
 
 server:
   port: 8086
