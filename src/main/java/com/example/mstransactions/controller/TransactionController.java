@@ -59,24 +59,11 @@ public class TransactionController {
    * @version 1.0
    */
   @GetMapping
-  public Flux<Transaction> findAll() {
-    logger.debug("Debugging log");
-    logger.info("Info log");
-    logger.warn("Hey, This is a warning!");
-    logger.error("Oops! We have an Error. OK");
-    logger.fatal("Damn! Fatal error. Please fix me.");
-    return service.findAll();
-  }
-
-  /**
-   * Get one transaction by idTransaction.
-   *
-   * @author Alisson Arteaga / Christian Dionisio
-   * @version 1.0
-   */
-  @GetMapping("/{id}")
-  public Mono<Transaction> read(@PathVariable String id) {
-    return service.findById(id);
+  public Mono<ResponseEntity<Flux<Transaction>>> findAll() {
+    return Mono.just(
+            ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON_UTF8)
+                    .body(service.findAll()));
   }
 
   /**
@@ -86,9 +73,25 @@ public class TransactionController {
    * @version 1.0
    */
   @PostMapping
-  public Mono<Transaction> create(@RequestBody TransactionDto transactionDto) {
+  public Mono<ResponseEntity<Transaction>> create(@RequestBody TransactionDto transactionDto) {
     modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
-    return service.create(modelMapper.map(transactionDto, Transaction.class));
+    return service.create(modelMapper.map(transactionDto, Transaction.class))
+            .flatMap(c -> Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(c)))
+            .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+  }
+
+  /**
+   * Get one transaction by idTransaction.
+   *
+   * @author Alisson Arteaga / Christian Dionisio
+   * @version 1.0
+   */
+  @GetMapping("/{id}")
+  public Mono<ResponseEntity<Transaction>> read(@PathVariable String id) {
+    return service.findById(id).map(creditCard -> ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON_UTF8)
+                    .body(creditCard))
+            .defaultIfEmpty(ResponseEntity.notFound().build());
   }
 
   /**
@@ -97,10 +100,18 @@ public class TransactionController {
    * @author Alisson Arteaga / Christian Dionisio
    * @version 1.0
    */
-  @PutMapping
-  public Mono<Transaction> update(@RequestBody TransactionDto transactionDto) {
+  @PutMapping("/{id}")
+  public Mono<ResponseEntity<Transaction>> update(@RequestBody TransactionDto transactionDto,
+                                                 @PathVariable String id) {
     modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
-    return service.update(modelMapper.map(transactionDto, Transaction.class));
+    return service.findById(id)
+            .flatMap(c -> service.update(modelMapper.map(transactionDto, Transaction.class)))
+            .map(transactionUpdated -> ResponseEntity
+                    .created(URI.create("/transactions/"
+                            .concat(transactionUpdated.getTransactionId())))
+                    .contentType(MediaType.APPLICATION_JSON_UTF8)
+                    .body(transactionUpdated))
+            .defaultIfEmpty(ResponseEntity.notFound().build());
   }
 
   /**
@@ -110,8 +121,11 @@ public class TransactionController {
    * @version 1.0
    */
   @DeleteMapping
-  public Mono<Void> delete(@RequestParam String transactionId) {
-    return service.delete(transactionId);
+  public Mono<ResponseEntity<Void>> delete(@RequestParam String transactionId) {
+    return service.findById(transactionId)
+            .flatMap(transaction -> service.delete(transaction.getTransactionId())
+                    .then(Mono.just(new ResponseEntity<Void>(HttpStatus.NO_CONTENT))))
+            .defaultIfEmpty(new ResponseEntity<Void>(HttpStatus.NOT_FOUND));
   }
 
   /**
