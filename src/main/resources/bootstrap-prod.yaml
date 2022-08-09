@@ -7,7 +7,7 @@ spring:
   cloud:
     config:
       name: ms-transactions
-      uri: http://localhost:8081
+      uri: http://ms-config-server:8081
 
 server:
   port: 8086
