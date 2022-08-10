@@ -1,6 +1,7 @@
 package com.example.mstransactions.controller;
 
 import com.example.mstransactions.data.dto.TransactionDto;
+import com.example.mstransactions.data.enums.ProductTypeEnum;
 import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
 import com.example.mstransactions.error.CreditAmountToPayInvalidException;
 import com.example.mstransactions.error.CreditCardWithInsuficientBalanceException;
@@ -21,6 +22,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.List;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -250,7 +252,71 @@ public class TransactionControllerTest {
             .expectStatus().is5xxServerError();
   }
 
+  @Test
+  @DisplayName("Get all transactions by Product Id")
+  void findTransactionsByProduct() {
+    Mockito.when(transactionService.findTransactionsByProductId("1"))
+            .thenReturn(Flux.fromIterable(TransactionProvider.getTransactionList()));
 
+    webClient.get()
+            .uri("/transactions/byProduct/{productId}", Collections.singletonMap("productId", "1"))
+            .accept(MediaType.APPLICATION_JSON_UTF8)
+            .exchange()
+            .expectStatus().isOk()
+            .expectHeader().contentType(MediaType.APPLICATION_JSON_UTF8)
+            .expectBodyList(Transaction.class)
+            .hasSize(1);
+  }
 
+  @Test
+  @DisplayName("Get all transactions by ProductId and ProductType")
+  void findTransactionsByProductTypeAndProductId() {
+    Mockito.when(transactionService.findTransactionsByProductTypeAndProductId(ProductTypeEnum.ACCOUNT.getValue(), "1"))
+            .thenReturn(Flux.fromIterable(TransactionProvider.getTransactionList()));
 
+    webClient.get()
+            .uri("/transactions/byProductType?productType=ACCOUNT&productId=1")
+            .accept(MediaType.APPLICATION_JSON_UTF8)
+            .exchange()
+            .expectStatus().isOk()
+            .expectHeader().contentType(MediaType.APPLICATION_JSON_UTF8)
+            .expectBodyList(Transaction.class)
+            .hasSize(1);
+  }
+
+  @Test
+  @DisplayName("transferBetweenAccounts")
+  void transferBetweenAccounts() {
+    Mockito.when(transactionService.transferBetweenAccounts(Mockito.any(TransactionDto.class)))
+            .thenReturn(Mono.just(TransactionProvider.getTransaction()));
+
+    webClient.post().uri("/transactions/transferBetweenAccounts")
+            .body(Mono.just(TransactionProvider.getTransactionDto()), TransactionDto.class)
+            .exchange()
+            .expectStatus().isCreated();
+  }
+
+  @Test
+  @DisplayName("transferBetweenAccounts with AccountWithInsuficientBalanceException")
+  void transferBetweenAccountsWithAccountWithInsuficientBalanceException() {
+    Mockito.when(transactionService.transferBetweenAccounts(Mockito.any(TransactionDto.class)))
+            .thenReturn(Mono.error(new AccountWithInsuficientBalanceException(TransactionProvider.PRODUCT_ID_DEPOSIT)));
+
+    webClient.post().uri("/transactions/transferBetweenAccounts")
+            .body(Mono.just(TransactionProvider.getTransactionDto()), TransactionDto.class)
+            .exchange()
+            .expectStatus().isForbidden();
+  }
+
+  @Test
+  @DisplayName("transferBetweenAccounts with General Exception")
+  void transferBetweenAccountsWithGeneralException() {
+    Mockito.when(transactionService.transferBetweenAccounts(Mockito.any(TransactionDto.class)))
+            .thenReturn(Mono.error(new Exception("GeneralException TEST")));
+
+    webClient.post().uri("/transactions/transferBetweenAccounts")
+            .body(Mono.just(TransactionProvider.getTransactionDto()), TransactionDto.class)
+            .exchange()
+            .expectStatus().is5xxServerError();
+  }
 }

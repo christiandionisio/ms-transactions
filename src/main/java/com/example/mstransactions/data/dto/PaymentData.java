@@ -22,7 +22,7 @@ public class PaymentData extends TransactionData {
   public PaymentData(BigDecimal amount, String transactionDate,
                      String productId, Integer quotaNumber) {
     super(amount, TransactionTypeEnum.PAYMENT.getTransactionType(),
-            transactionDate, productId, ProductTypeEnum.CREDIT.getProductType());
+            transactionDate, productId, ProductTypeEnum.CREDIT.getValue());
     this.quotaNumber = quotaNumber;
   }
 

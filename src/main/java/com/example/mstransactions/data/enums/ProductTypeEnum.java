@@ -11,13 +11,13 @@ public enum ProductTypeEnum {
   CREDIT_CARD("CREDIT_CARD"),
   CREDIT("CREDIT");
 
-  private String productType;
+  private String value;
 
-  ProductTypeEnum(String productType) {
-    this.productType = productType;
+  ProductTypeEnum(String value) {
+    this.value = value;
   }
 
-  public String getProductType() {
-    return productType;
+  public String getValue() {
+    return value;
   }
 }

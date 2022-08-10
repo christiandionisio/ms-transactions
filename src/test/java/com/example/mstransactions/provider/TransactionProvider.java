@@ -12,6 +12,13 @@ import java.util.List;
 
 public class TransactionProvider {
 
+  public static final String PRODUCT_ID_DEPOSIT = "D01";
+  public static final String PRODUCT_ID_WITHDRAWAL = "W01";
+  public static final String PRODUCT_ID_CREDIT = "C01";
+  public static final String PRODUCT_ID_CREDIT_CARD = "CC01";
+
+  private static final LocalDateTime TRANSACTION_DATE = LocalDateTime.of(2022, 2, 13, 15, 56);
+
   public static List<Transaction> getTransactionList() {
     List<Transaction> creditList = new ArrayList<>();
     creditList.add(getTransaction());
@@ -24,8 +31,8 @@ public class TransactionProvider {
     transaction.setAmount(BigDecimal.valueOf(5000));
     transaction.setTransactionType(TransactionTypeEnum.DEPOSIT.getTransactionType());
     transaction.setTransactionDate(LocalDateTime.of(2022, 2, 13, 15, 56));
-    transaction.setProductId("1");
-    transaction.setProductType(ProductTypeEnum.ACCOUNT.getProductType());
+    transaction.setProductId(PRODUCT_ID_DEPOSIT);
+    transaction.setProductType(ProductTypeEnum.ACCOUNT.getValue());
     return transaction;
   }
 
@@ -34,9 +41,9 @@ public class TransactionProvider {
             .transactionId("1")
             .amount(BigDecimal.valueOf(5000))
             .transactionType(TransactionTypeEnum.DEPOSIT.getTransactionType())
-            .transactionDate(LocalDateTime.of(2022, 2, 13, 15, 56))
-            .productId("1")
-            .productType(ProductTypeEnum.ACCOUNT.getProductType())
+            .transactionDate(TRANSACTION_DATE)
+            .productId(PRODUCT_ID_DEPOSIT)
+            .productType(ProductTypeEnum.ACCOUNT.getValue())
             .build();
   }
 
@@ -45,9 +52,9 @@ public class TransactionProvider {
     transaction.setTransactionId("1");
     transaction.setAmount(BigDecimal.valueOf(200));
     transaction.setTransactionType(TransactionTypeEnum.DEPOSIT.getTransactionType());
-    transaction.setTransactionDate(LocalDateTime.of(2022, 2, 15, 15, 56));
-    transaction.setProductId("1");
-    transaction.setProductType(ProductTypeEnum.ACCOUNT.getProductType());
+    transaction.setTransactionDate(TRANSACTION_DATE);
+    transaction.setProductId(PRODUCT_ID_DEPOSIT);
+    transaction.setProductType(ProductTypeEnum.ACCOUNT.getValue());
     return transaction;
   }
 
@@ -56,9 +63,9 @@ public class TransactionProvider {
             .transactionId("1")
             .amount(BigDecimal.valueOf(200))
             .transactionType(TransactionTypeEnum.DEPOSIT.getTransactionType())
-            .transactionDate(LocalDateTime.of(2022, 2, 15, 15, 56))
-            .productId("1")
-            .productType(ProductTypeEnum.ACCOUNT.getProductType())
+            .transactionDate(TRANSACTION_DATE)
+            .productId(PRODUCT_ID_DEPOSIT)
+            .productType(ProductTypeEnum.ACCOUNT.getValue())
             .build();
   }
 
@@ -67,9 +74,9 @@ public class TransactionProvider {
     transaction.setTransactionId("1");
     transaction.setAmount(BigDecimal.valueOf(100));
     transaction.setTransactionType(TransactionTypeEnum.WITHDRAWAL.getTransactionType());
-    transaction.setTransactionDate(LocalDateTime.of(2022, 1, 15, 15, 56));
-    transaction.setProductId("1");
-    transaction.setProductType(ProductTypeEnum.ACCOUNT.getProductType());
+    transaction.setTransactionDate(TRANSACTION_DATE);
+    transaction.setProductId(PRODUCT_ID_WITHDRAWAL);
+    transaction.setProductType(ProductTypeEnum.ACCOUNT.getValue());
     return transaction;
   }
 
@@ -78,9 +85,9 @@ public class TransactionProvider {
             .transactionId("1")
             .amount(BigDecimal.valueOf(100))
             .transactionType(TransactionTypeEnum.WITHDRAWAL.getTransactionType())
-            .transactionDate(LocalDateTime.of(2022, 1, 15, 15, 56))
-            .productId("1")
-            .productType(ProductTypeEnum.ACCOUNT.getProductType())
+            .transactionDate(TRANSACTION_DATE)
+            .productId(PRODUCT_ID_WITHDRAWAL)
+            .productType(ProductTypeEnum.ACCOUNT.getValue())
             .build();
   }
 
@@ -89,10 +96,10 @@ public class TransactionProvider {
     transaction.setTransactionId("1");
     transaction.setAmount(BigDecimal.valueOf(50.23));
     transaction.setTransactionType(TransactionTypeEnum.PAYMENT.getTransactionType());
-    transaction.setTransactionDate(LocalDateTime.of(2022, 2, 15, 15, 56));
+    transaction.setTransactionDate(TRANSACTION_DATE);
     transaction.setQuotaNumber(1);
-    transaction.setProductId("1");
-    transaction.setProductType(ProductTypeEnum.CREDIT.getProductType());
+    transaction.setProductId(PRODUCT_ID_CREDIT);
+    transaction.setProductType(ProductTypeEnum.CREDIT.getValue());
     return transaction;
   }
 
@@ -101,10 +108,10 @@ public class TransactionProvider {
             .transactionId("1")
             .amount(BigDecimal.valueOf(50.23))
             .transactionType(TransactionTypeEnum.PAYMENT.getTransactionType())
-            .transactionDate(LocalDateTime.of(2022, 2, 15, 15, 56))
+            .transactionDate(TRANSACTION_DATE)
             .quotaNumber(1)
-            .productId("1")
-            .productType(ProductTypeEnum.CREDIT.getProductType())
+            .productId(PRODUCT_ID_CREDIT)
+            .productType(ProductTypeEnum.CREDIT.getValue())
             .build();
   }
 
@@ -113,10 +120,10 @@ public class TransactionProvider {
     transaction.setTransactionId("1");
     transaction.setAmount(BigDecimal.valueOf(50.23));
     transaction.setTransactionType(TransactionTypeEnum.CONSUMPTION.getTransactionType());
-    transaction.setTransactionDate(LocalDateTime.of(2022, 2, 15, 15, 56));
+    transaction.setTransactionDate(TRANSACTION_DATE);
     transaction.setCommerceName("LINIO.PE");
-    transaction.setProductId("1");
-    transaction.setProductType(ProductTypeEnum.CREDIT_CARD.getProductType());
+    transaction.setProductId(PRODUCT_ID_CREDIT_CARD);
+    transaction.setProductType(ProductTypeEnum.CREDIT_CARD.getValue());
     return transaction;
   }
 
@@ -125,10 +132,10 @@ public class TransactionProvider {
             .transactionId("1")
             .amount(BigDecimal.valueOf(50.23))
             .transactionType(TransactionTypeEnum.CONSUMPTION.getTransactionType())
-            .transactionDate(LocalDateTime.of(2022, 2, 15, 15, 56))
+            .transactionDate(TRANSACTION_DATE)
             .commerceName("LINIO.PE")
-            .productId("1")
-            .productType(ProductTypeEnum.CREDIT_CARD.getProductType())
+            .productId(PRODUCT_ID_CREDIT_CARD)
+            .productType(ProductTypeEnum.CREDIT_CARD.getValue())
             .build();
   }
 }

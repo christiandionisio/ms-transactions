@@ -25,7 +25,7 @@ public class TransferData extends TransactionData {
                       String transactionDate, String productId,
                       String originAccount, String destinationAccount) {
     super(amount, operationType, transactionDate,
-            productId, ProductTypeEnum.ACCOUNT.getProductType());
+            productId, ProductTypeEnum.ACCOUNT.getValue());
     this.originAccount = originAccount;
     this.destinationAccount = destinationAccount;
   }

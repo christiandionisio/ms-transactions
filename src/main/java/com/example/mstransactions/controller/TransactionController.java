@@ -239,8 +239,9 @@ public class TransactionController {
    * @version 1.0
    */
   @GetMapping("/byProduct/{productId}")
-  public Flux<Transaction> findTransactionsByProduct(@PathVariable String productId) {
-    return service.findTransactionsByProductId(productId);
+  public Mono<ResponseEntity<Flux<Transaction>>> findTransactionsByProduct(@PathVariable String productId) {
+    return Mono.just(ResponseEntity.ok(service.findTransactionsByProductId(productId)))
+            .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
   /**

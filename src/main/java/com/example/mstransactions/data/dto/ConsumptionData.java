@@ -23,7 +23,7 @@ public class ConsumptionData extends TransactionData {
   public ConsumptionData(BigDecimal amount, String transactionDate,
                          String productId, String commerceName) {
     super(amount, TransactionTypeEnum.CONSUMPTION.getTransactionType(), transactionDate,
-            productId, ProductTypeEnum.CREDIT_CARD.getProductType());
+            productId, ProductTypeEnum.CREDIT_CARD.getValue());
     this.commerceName = commerceName;
   }
 
