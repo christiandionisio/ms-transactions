@@ -39,8 +39,6 @@ public interface TransactionService {
 
   Mono<Transaction> transferBetweenAccounts(TransactionDto transactionDto);
 
-  Flux<Transaction> findTransactionsBetweenRange();
-
   Flux<TransactionCommissionDto> getTransactionsWithCommissions(FilterDto filterDto);
 
   Mono<DailyBalanceTemplateResponse> getDailyBalanceTemplate(String customerId);

@@ -317,16 +317,6 @@ public class TransactionServiceImpl implements TransactionService {
   }
 
   @Override
-  public Flux<Transaction> findTransactionsBetweenRange() {
-    LocalDateTime startDate = LocalDateTime.now().withDayOfMonth(1)
-        .withHour(0).withMinute(0).withSecond(0).withNano(0).minusNanos(1);
-
-    LocalDateTime endDate = startDate.plusMonths(1).plusNanos(1);
-
-    return repo.findByTransactionDateBetween(startDate, endDate);
-  }
-
-  @Override
   public Flux<TransactionCommissionDto> getTransactionsWithCommissions(FilterDto filterDto) {
     LocalDateTime startDate = LocalDateTime.parse(
         filterDto.getStartDate(), FORMATTER_DATE_TIME).minusSeconds(1);

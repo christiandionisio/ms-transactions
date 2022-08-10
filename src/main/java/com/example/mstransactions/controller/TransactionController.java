@@ -289,17 +289,6 @@ public class TransactionController {
   }
 
   /**
-   * Get transactions by range of dates.
-   *
-   * @author Alisson Arteaga / Christian Dionisio
-   * @version 1.0
-   */
-  @GetMapping("/range")
-  public Flux<Transaction> getTransactionsBetweenRange() {
-    return service.findTransactionsBetweenRange();
-  }
-
-  /**
    * Find transactions with commissions.
    *
    * @author Alisson Arteaga / Christian Dionisio
