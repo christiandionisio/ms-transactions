@@ -3,6 +3,7 @@ package com.example.mstransactions.controller;
 import com.example.mstransactions.data.dto.TransactionDto;
 import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
 import com.example.mstransactions.error.CreditAmountToPayInvalidException;
+import com.example.mstransactions.error.CreditCardWithInsuficientBalanceException;
 import com.example.mstransactions.error.CreditPaymentAlreadyCompletedException;
 import com.example.mstransactions.model.Transaction;
 import com.example.mstransactions.provider.TransactionProvider;
@@ -212,4 +213,44 @@ public class TransactionControllerTest {
             .exchange()
             .expectStatus().is5xxServerError();
   }
+
+  @Test
+  @DisplayName("makeConsumption")
+  void makeConsumption() {
+    Mockito.when(transactionService.makeConsumption(Mockito.any(TransactionDto.class)))
+            .thenReturn(Mono.just(TransactionProvider.getTransactionConsumption()));
+
+    webClient.post().uri("/transactions/consumption")
+            .body(Mono.just(TransactionProvider.getTransactionConsumptionDto()), TransactionDto.class)
+            .exchange()
+            .expectStatus().isCreated();
+  }
+
+  @Test
+  @DisplayName("makeConsumption with CreditCardWithInsuficientBalanceException")
+  void makeConsumptionWithCreditCardWithInsuficientBalanceException() {
+    Mockito.when(transactionService.makeConsumption(Mockito.any(TransactionDto.class)))
+            .thenReturn(Mono.error(new CreditCardWithInsuficientBalanceException("1")));
+
+    webClient.post().uri("/transactions/consumption")
+            .body(Mono.just(TransactionProvider.getTransactionConsumptionDto()), TransactionDto.class)
+            .exchange()
+            .expectStatus().isForbidden();
+  }
+
+  @Test
+  @DisplayName("makeConsumption with General Exception")
+  void makeConsumptionWithGeneralException() {
+    Mockito.when(transactionService.makeConsumption(Mockito.any(TransactionDto.class)))
+            .thenReturn(Mono.error(new Exception("GeneralException TEST")));
+
+    webClient.post().uri("/transactions/consumption")
+            .body(Mono.just(TransactionProvider.getTransactionConsumptionDto()), TransactionDto.class)
+            .exchange()
+            .expectStatus().is5xxServerError();
+  }
+
+
+
+
 }

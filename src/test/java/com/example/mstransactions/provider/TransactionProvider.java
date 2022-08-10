@@ -107,4 +107,28 @@ public class TransactionProvider {
             .productType(ProductTypeEnum.CREDIT.getProductType())
             .build();
   }
+
+  public static Transaction getTransactionConsumption() {
+    Transaction transaction = new Transaction();
+    transaction.setTransactionId("1");
+    transaction.setAmount(BigDecimal.valueOf(50.23));
+    transaction.setTransactionType(TransactionTypeEnum.CONSUMPTION.getTransactionType());
+    transaction.setTransactionDate(LocalDateTime.of(2022, 2, 15, 15, 56));
+    transaction.setCommerceName("LINIO.PE");
+    transaction.setProductId("1");
+    transaction.setProductType(ProductTypeEnum.CREDIT_CARD.getProductType());
+    return transaction;
+  }
+
+  public static TransactionDto getTransactionConsumptionDto() {
+    return TransactionDto.builder()
+            .transactionId("1")
+            .amount(BigDecimal.valueOf(50.23))
+            .transactionType(TransactionTypeEnum.CONSUMPTION.getTransactionType())
+            .transactionDate(LocalDateTime.of(2022, 2, 15, 15, 56))
+            .commerceName("LINIO.PE")
+            .productId("1")
+            .productType(ProductTypeEnum.CREDIT_CARD.getProductType())
+            .build();
+  }
 }
