@@ -2,6 +2,8 @@ package com.example.mstransactions.data.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import lombok.Builder;
 import lombok.Data;
 
 /**
@@ -11,6 +13,7 @@ import lombok.Data;
  * @version 1.0
  */
 @Data
+@Builder
 public class TransactionDto {
   private String transactionId;
   private BigDecimal amount;
