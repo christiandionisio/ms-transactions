@@ -322,4 +322,12 @@ public class TransactionController {
         })
         .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
+
+  @GetMapping("/getReportByProductTypeBetweenDates")
+    public Mono<ResponseEntity<Object>> getReportByProductTypeBetweenDates(@RequestParam String productType,
+                                                                           @RequestParam String startDate,
+                                                                           @RequestParam String endDate) {
+        return Mono.just(ResponseEntity.ok()
+            .body(service.getReportByProductType(productType, startDate, endDate)));
+    }
 }

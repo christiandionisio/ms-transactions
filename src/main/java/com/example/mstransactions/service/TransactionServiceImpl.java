@@ -386,7 +386,15 @@ public class TransactionServiceImpl implements TransactionService {
         .flatMap(finalResponse -> Mono.just(dailyBalanceTemplateResponse));
   }
 
-  /**
+    @Override
+    public Flux<Transaction> getReportByProductType(String productType, String startDate, String endDate) {
+        LocalDate startDateTime = LocalDate.parse(startDate, FORMATTER);
+        LocalDate endDateTime = LocalDate.parse(endDate, FORMATTER);
+        return repo.findByProductTypeAndTransactionDateBetween(productType, startDateTime.atStartOfDay(),
+                endDateTime.atStartOfDay());
+    }
+
+    /**
    * Get TransactionCommissionDto from Transaction.
    *
    * @author Alisson Arteaga / Christian Dionisio

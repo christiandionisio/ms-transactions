@@ -24,6 +24,9 @@ public interface TransactionRepo extends ReactiveMongoRepository<Transaction, St
   Flux<Transaction> findByProductIdAndTransactionDateBetweenAndWithCommissionIsTrue(
           String productId, LocalDateTime startDate, LocalDateTime endDate);
 
+  Flux<Transaction> findByProductTypeAndTransactionDateBetween(String productType,
+                                                               LocalDateTime startDate, LocalDateTime endDate);
+
   Flux<Transaction> findByTransactionDateBetweenAndProductId(LocalDateTime startDate,
             LocalDateTime endDate, String productId);
 }
