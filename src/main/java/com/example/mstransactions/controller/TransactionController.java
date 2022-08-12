@@ -5,6 +5,7 @@ import com.example.mstransactions.data.dto.FilterDto;
 import com.example.mstransactions.data.dto.ResponseTemplateDto;
 import com.example.mstransactions.data.dto.TransactionDto;
 import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
+import com.example.mstransactions.error.AccountsWithInsuficientBalanceException;
 import com.example.mstransactions.error.CreditAmountToPayInvalidException;
 import com.example.mstransactions.error.CreditCardWithInsuficientBalanceException;
 import com.example.mstransactions.error.CreditPaymentAlreadyCompletedException;
@@ -351,7 +352,7 @@ public class TransactionController {
               return Mono.just(response);
             })
             .onErrorResume(e -> {
-              if (e instanceof AccountWithInsuficientBalanceException) {
+              if (e instanceof AccountsWithInsuficientBalanceException) {
                 logger.error(e.getMessage());
                 return Mono.just(new ResponseEntity<>(new ResponseTemplateDto(null,
                         e.getMessage()), HttpStatus.FORBIDDEN));

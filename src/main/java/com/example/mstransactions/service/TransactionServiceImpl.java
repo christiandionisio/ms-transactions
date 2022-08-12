@@ -1,11 +1,13 @@
 package com.example.mstransactions.service;
 
+import com.example.mstransactions.data.Account;
 import com.example.mstransactions.data.Card;
 import com.example.mstransactions.data.dto.*;
 import com.example.mstransactions.data.enums.ProductTypeEnum;
 import com.example.mstransactions.data.enums.TransactionTypeEnum;
 import com.example.mstransactions.error.AccountServiceNotAvailableException;
 import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
+import com.example.mstransactions.error.AccountsWithInsuficientBalanceException;
 import com.example.mstransactions.error.CreditAmountToPayInvalidException;
 import com.example.mstransactions.error.CreditCardServiceNotAvailableException;
 import com.example.mstransactions.error.CreditCardWithInsuficientBalanceException;
@@ -428,18 +430,32 @@ public class TransactionServiceImpl implements TransactionService {
               return transactionUtil.findAccountById(accountId)
                       .flatMap(account -> {
                         BigDecimal actualAmount = transactionDto.getAmount();
+
                         if (account.getBalance().compareTo(actualAmount) != -1) {
                           account.setBalance(account.getBalance().subtract(actualAmount));
+                          transferData.setDestinationAccount(account.getAccountId());
                           return Mono.just(account);
                         } else {
-                          return Mono.error(
-                                  new AccountWithInsuficientBalanceException(
-                                          account.getAccountId()));
+                          Mono<Account> accountMono = transactionUtil.findAccountsByCustomerIdAndDebitCardId(customerId, transactionDto.getProductId())
+                                  .filter(account1-> (!account1.getAccountId().equals((accountId))))
+                                  .filter(account2-> (account2.getBalance().compareTo(transactionDto.getAmount()) != -1))
+                                  .map(c -> {
+                                    c.setBalance(c.getBalance().subtract(actualAmount));
+                                    transferData.setDestinationAccount(c.getAccountId());
+                                    return c;
+                                  }).next();
+                          return accountMono.defaultIfEmpty(new Account());
                         }
                       });
-            }).flatMap(finalAccount -> transactionUtil.updateAccountBalance(finalAccount)
-                    .flatMap(update -> this.saveOperation(transferData))
-            );
+            }).flatMap(finalAccount -> {
+              if(finalAccount.getAccountId() == null){
+                return Mono.error(
+                        new AccountsWithInsuficientBalanceException(customerId));
+              }else{
+                return transactionUtil.updateAccountBalance(finalAccount)
+                        .flatMap(update -> this.saveOperation(transferData));
+              }
+            });
   }
 
   @Override

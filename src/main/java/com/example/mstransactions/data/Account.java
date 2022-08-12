@@ -1,6 +1,8 @@
 package com.example.mstransactions.data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import lombok.Data;
 
 /**
@@ -21,4 +23,6 @@ public class Account {
   private String updatedAt;
   private String customerOwnerType;
   private String customerOwnerId;
+  private String cardId;
+  private LocalDateTime cardIdAssociateDate;
 }

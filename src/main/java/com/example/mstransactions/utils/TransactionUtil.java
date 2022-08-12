@@ -8,6 +8,7 @@ import com.example.mstransactions.data.dto.TransactionDto;
 import com.example.mstransactions.data.dto.TransferData;
 import com.example.mstransactions.error.AccountNotFoundException;
 import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
+import com.example.mstransactions.error.AccountsDebitCardNotFoundException;
 import com.example.mstransactions.error.CardNotFoundException;
 import com.example.mstransactions.error.CreditNotFoundException;
 import java.math.BigDecimal;
@@ -275,6 +276,24 @@ public class TransactionUtil {
                     Mono.error(new CardNotFoundException(debitCardId))
             )
             .bodyToMono(Card.class);
+  }
+
+  /**
+   * Get accounts by debit card ID and Customer ID.
+   *
+   * @param customerId Customer ID.
+   * @param debitCardId Card ID.
+   */
+  public Flux<Account> findAccountsByCustomerIdAndDebitCardId(String customerId, String debitCardId) {
+    return WebClient.create().get()
+            .uri( uriAccountService+ "findByCustomerOwnerIdAndCardId?" +
+                    "customerOwnerId=" + customerId + "&cardId="+debitCardId )
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .onStatus(HttpStatus::is4xxClientError, response ->
+                    Mono.error(new AccountsDebitCardNotFoundException(debitCardId))
+            )
+            .bodyToFlux(Account.class);
   }
 }
 
