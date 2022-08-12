@@ -335,4 +335,18 @@ public class TransactionControllerTest {
             .expectBodyList(Transaction.class)
             .hasSize(1);
   }
+
+  @Test
+  @DisplayName("Get last ten transactions")
+  void findLastTenTransactionsByProductTypeAndProductId() {
+    Mockito.when(transactionService.findLastTenTransactionsByProductTypeAndProductId(Mockito.anyString(), Mockito.anyString()))
+            .thenReturn(Flux.fromIterable(TransactionProvider.getTransactionList()));
+
+    webClient.get()
+            .uri("/transactions/lastTenTransactions?productType=DEBIT&productId=1")
+            .exchange()
+            .expectStatus().isOk()
+            .expectBodyList(Transaction.class)
+            .hasSize(1);
+  }
 }
