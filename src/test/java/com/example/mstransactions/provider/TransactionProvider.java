@@ -17,7 +17,7 @@ public class TransactionProvider {
   public static final String PRODUCT_ID_CREDIT = "C01";
   public static final String PRODUCT_ID_CREDIT_CARD = "CC01";
 
-  private static final LocalDateTime TRANSACTION_DATE_TIME = LocalDateTime.of(2022, 2, 0, 0, 0);
+  private static final LocalDateTime TRANSACTION_DATE_TIME = LocalDateTime.of(2022, 2, 1, 0, 0);
   private static final String TRANSACTION_DATE = "13/02/2022";
 
   public static List<Transaction> getTransactionList() {
