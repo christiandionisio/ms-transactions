@@ -40,7 +40,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("Get all transactions")
   void findAll() {
     Mockito.when(transactionService.findAll())
@@ -64,7 +63,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("Create Transaction")
   void create() {
     Mockito.when(transactionService.create(Mockito.any(Transaction.class)))
@@ -77,7 +75,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("Read transaction")
   void read() {
     Mockito.when(transactionService.findById(Mockito.anyString()))
@@ -96,7 +93,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("Update transaction")
   void update() {
     Mockito.when(transactionService.findById(Mockito.anyString()))
@@ -113,7 +109,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("Delete transaction")
   void delete() {
     Mockito.when(transactionService.findById(Mockito.anyString()))
@@ -127,7 +122,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("makeDeposit")
   void makeDeposit() {
     Mockito.when(transactionService.makeDeposit(Mockito.any(TransactionDto.class)))
@@ -140,7 +134,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("makeWithdrawal")
   void makeWithdrawal() {
     Mockito.when(transactionService.makeWithdrawal(Mockito.any(TransactionDto.class)))
@@ -153,7 +146,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("makeWithdrawal with AccountWithInsuficientBalanceException")
   void makeWithdrawalWithAccountWithInsuficientBalanceException() {
     Mockito.when(transactionService.makeWithdrawal(Mockito.any(TransactionDto.class)))
@@ -166,7 +158,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("makeWithdrawal with General Exception")
   void makeWithdrawalWithGeneralException() {
     Mockito.when(transactionService.makeWithdrawal(Mockito.any(TransactionDto.class)))
@@ -179,7 +170,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("makePayment")
   void makePayment() {
     Mockito.when(transactionService.makePayment(Mockito.any(TransactionDto.class)))
@@ -192,7 +182,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("makePayment with CreditAmountToPayInvalidException")
   void makePaymentWithCreditAmountToPayInvalidException() {
     Mockito.when(transactionService.makePayment(Mockito.any(TransactionDto.class)))
@@ -205,7 +194,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("makePayment with CreditPaymentAlreadyCompletedException")
   void makePaymentWithCreditPaymentAlreadyCompletedException() {
     Mockito.when(transactionService.makePayment(Mockito.any(TransactionDto.class)))
@@ -218,7 +206,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("makePayment with General Exception")
   void makePaymentWithGeneralException() {
     Mockito.when(transactionService.makePayment(Mockito.any(TransactionDto.class)))
@@ -231,7 +218,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("makeConsumption")
   void makeConsumption() {
     Mockito.when(transactionService.makeConsumption(Mockito.any(TransactionDto.class)))
@@ -244,7 +230,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("makeConsumption with CreditCardWithInsuficientBalanceException")
   void makeConsumptionWithCreditCardWithInsuficientBalanceException() {
     Mockito.when(transactionService.makeConsumption(Mockito.any(TransactionDto.class)))
@@ -257,7 +242,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("makeConsumption with General Exception")
   void makeConsumptionWithGeneralException() {
     Mockito.when(transactionService.makeConsumption(Mockito.any(TransactionDto.class)))
@@ -270,7 +254,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("Get all transactions by Product Id")
   void findTransactionsByProduct() {
     Mockito.when(transactionService.findTransactionsByProductId("1"))
@@ -287,7 +270,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("Get all transactions by ProductId and ProductType")
   void findTransactionsByProductTypeAndProductId() {
     Mockito.when(transactionService.findTransactionsByProductTypeAndProductId(ProductTypeEnum.ACCOUNT.getValue(), "1"))
@@ -304,7 +286,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("transferBetweenAccounts")
   void transferBetweenAccounts() {
     Mockito.when(transactionService.transferBetweenAccounts(Mockito.any(TransactionDto.class)))
@@ -317,7 +298,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("transferBetweenAccounts with AccountWithInsuficientBalanceException")
   void transferBetweenAccountsWithAccountWithInsuficientBalanceException() {
     Mockito.when(transactionService.transferBetweenAccounts(Mockito.any(TransactionDto.class)))
@@ -330,7 +310,6 @@ public class TransactionControllerTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("transferBetweenAccounts with General Exception")
   void transferBetweenAccountsWithGeneralException() {
     Mockito.when(transactionService.transferBetweenAccounts(Mockito.any(TransactionDto.class)))
