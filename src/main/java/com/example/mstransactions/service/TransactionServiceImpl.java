@@ -444,6 +444,6 @@ public class TransactionServiceImpl implements TransactionService {
 
   @Override
   public Flux<Transaction> findLastTenTransactionsByProductTypeAndProductId(String productType, String productId) {
-    return repo.findAllByProductTypeAndProductIdOrderByTransactionDateDesc(productType, productId);
+    return repo.findAllByProductTypeAndProductIdOrderByTransactionDateDesc(productType, productId).take(10);
   }
 }
