@@ -3,16 +3,19 @@ package com.example.mstransactions.utils;
 import com.example.mstransactions.data.Account;
 import com.example.mstransactions.data.AccountConfiguration;
 import com.example.mstransactions.data.Credit;
-import com.example.mstransactions.data.CreditCard;
+import com.example.mstransactions.data.Card;
 import com.example.mstransactions.data.dto.TransactionDto;
 import com.example.mstransactions.data.dto.TransferData;
 import com.example.mstransactions.error.AccountNotFoundException;
 import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
-import com.example.mstransactions.error.CreditCardNotFoundException;
+import com.example.mstransactions.error.CardNotFoundException;
 import com.example.mstransactions.error.CreditNotFoundException;
 import java.math.BigDecimal;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -23,10 +26,22 @@ import reactor.core.publisher.Mono;
  * @author Alisson Arteaga / Christian Dionisio
  * @version 1.0
  */
+@Component
 public class TransactionUtil {
 
+  @Value("${customer.service.uri}")
+  private String uriCustomerService;
+
+  @Value("${credit.service.uri}")
+  private String uriCreditService;
+
+  @Value("${account.service.uri}")
+  private String uriAccountService;
+
+  @Value("${card.service.uri}")
+  private String uriCardService;
+
   private TransactionUtil() {
-    throw new IllegalStateException("Utility class");
   }
 
   /**
@@ -34,9 +49,9 @@ public class TransactionUtil {
    *
    * @param id Account ID.
    */
-  public static Mono<Account> findAccountById(String id) {
+  public Mono<Account> findAccountById(String id) {
     return WebClient.create().get()
-            .uri("http://localhost:9083/accounts/" + id)
+            .uri(uriAccountService + id)
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .onStatus(HttpStatus::is4xxClientError, response ->
@@ -50,9 +65,9 @@ public class TransactionUtil {
    *
    * @param account Account object.
    */
-  public static Mono<Account> updateAccountBalance(Account account) {
+  public Mono<Account> updateAccountBalance(Account account) {
     return WebClient.create().put()
-            .uri("http://localhost:9083/accounts")
+            .uri(uriAccountService)
             .bodyValue(account)
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
@@ -64,9 +79,9 @@ public class TransactionUtil {
    *
    * @param id Credit ID.
    */
-  public static Mono<Credit> findCreditById(String id) {
+  public Mono<Credit> findCreditById(String id) {
     return WebClient.create().get()
-            .uri("http://localhost:9085/credits/" + id)
+            .uri(uriCreditService + id)
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .onStatus(HttpStatus::is4xxClientError, response ->
@@ -80,15 +95,15 @@ public class TransactionUtil {
    *
    * @param id Credit card ID.
    */
-  public static Mono<CreditCard> findCreditCardById(String id) {
+  public Mono<Card> findCreditCardById(String id) {
     return WebClient.create().get()
-            .uri("http://localhost:9084/credit-cards/" + id)
+            .uri(uriCardService + id)
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .onStatus(HttpStatus::is4xxClientError, response ->
-                    Mono.error(new CreditCardNotFoundException(id))
+                    Mono.error(new CardNotFoundException(id))
             )
-            .bodyToMono(CreditCard.class);
+            .bodyToMono(Card.class);
   }
 
   /**
@@ -96,13 +111,13 @@ public class TransactionUtil {
    *
    * @param creditCard creditCard object.
    */
-  public static Mono<CreditCard> updateCreditCardLimit(CreditCard creditCard) {
+  public Mono<Card> updateCreditCardLimit(Card creditCard) {
     return WebClient.create().put()
-            .uri("http://localhost:9084/credit-cards")
+            .uri(uriCardService)
             .bodyValue(creditCard)
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
-            .bodyToMono(CreditCard.class);
+            .bodyToMono(Card.class);
   }
 
   /**
@@ -111,10 +126,10 @@ public class TransactionUtil {
    * @param accountType Account type.
    * @param name Name of the configuration.
    */
-  public static Mono<AccountConfiguration> findByAccountTypeAndName(
+  public Mono<AccountConfiguration> findByAccountTypeAndName(
           String accountType, String name) {
     return WebClient.create().get()
-            .uri("http://localhost:9083/accounts/configurations/searchByAccountTypeAndName?accountType="
+            .uri(uriAccountService+ "configurations/searchByAccountTypeAndName?accountType="
                     + accountType + "&name=" + name)
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
@@ -129,11 +144,11 @@ public class TransactionUtil {
    * @param transaction Transaction object.
    * @param transferData TransferData object.
    */
-  public static Mono<Account> setBalanceCommisionToDeposit(
+  public Mono<Account> setBalanceCommisionToDeposit(
           Boolean isOutOfMaxTransactions, Account accountTransition,
           TransactionDto transaction, TransferData transferData) {
     if (Boolean.TRUE.equals(isOutOfMaxTransactions)) {
-      return TransactionUtil.findByAccountTypeAndName(
+      return this.findByAccountTypeAndName(
             accountTransition.getAccountType(), "commision")
             .flatMap(accountConfiguration -> {
               BigDecimal commision = BigDecimal.valueOf(accountConfiguration.getValue() * 0.01);
@@ -160,11 +175,11 @@ public class TransactionUtil {
    * @param transaction Transaction object.
    * @param transferData TransferData object.
    */
-  public static Mono<Account> setBalanceCommissionToWithdrawal(
+  public Mono<Account> setBalanceCommissionToWithdrawal(
           Boolean isOutOfMaxTransactions, Account accountTransition,
           TransactionDto transaction, TransferData transferData) {
     if (Boolean.TRUE.equals(isOutOfMaxTransactions)) {
-      return TransactionUtil.findByAccountTypeAndName(
+      return this.findByAccountTypeAndName(
             accountTransition.getAccountType(), "commision")
             .flatMap(accountConfiguration -> {
               BigDecimal commission = BigDecimal.valueOf(accountConfiguration.getValue() * 0.01);
@@ -217,7 +232,7 @@ public class TransactionUtil {
    *
    * @param customerId Customer ID.
    */
-  public static Flux<CreditCard> findCreditCardByCustomerId(String customerId) {
+  public static Flux<Card> findCreditCardByCustomerId(String customerId) {
     return WebClient.create().get()
             .uri("http://localhost:9084/credit-cards/findByCustomerId/" + customerId)
             .accept(MediaType.APPLICATION_JSON)
@@ -225,7 +240,7 @@ public class TransactionUtil {
             .onStatus(HttpStatus::is4xxClientError, response ->
                     Mono.error(new AccountNotFoundException(customerId))
             )
-            .bodyToFlux(CreditCard.class);
+            .bodyToFlux(Card.class);
   }
 
   /**
@@ -233,9 +248,9 @@ public class TransactionUtil {
    *
    * @param customerId Customer ID.
    */
-  public static Flux<Credit> findCreditByCustomerId(String customerId) {
+  public Flux<Credit> findCreditByCustomerId(String customerId) {
     return WebClient.create().get()
-            .uri("http://localhost:9085/credits/findByCustomerId/" + customerId)
+            .uri(uriCreditService+"findByCustomerId/" + customerId)
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .onStatus(HttpStatus::is4xxClientError, response ->
@@ -244,5 +259,22 @@ public class TransactionUtil {
             .bodyToFlux(Credit.class);
   }
 
+  /**
+   * Get debit card by CustomerId
+   *
+   * @param customerId Customer ID.
+   * @param debitCardId Card ID.
+   */
+  public Mono<Card> findDebitCardByCustomerId(String customerId, String debitCardId) {
+    return WebClient.create().get()
+            .uri(uriCardService + "findByCustomerIdAndDebitCardId?" +
+                    "customerId=" + customerId + "&debitCardId="+debitCardId)
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .onStatus(HttpStatus::is4xxClientError, response ->
+                    Mono.error(new CardNotFoundException(debitCardId))
+            )
+            .bodyToMono(Card.class);
+  }
 }
 

@@ -1,15 +1,8 @@
 package com.example.mstransactions.service;
 
-import com.example.mstransactions.data.dto.AccountDailyBalanceDto;
-import com.example.mstransactions.data.dto.ConsumptionData;
-import com.example.mstransactions.data.dto.CreditCardDailyBalanceDto;
-import com.example.mstransactions.data.dto.CreditDailyBalanceDto;
-import com.example.mstransactions.data.dto.DailyBalanceTemplateResponse;
-import com.example.mstransactions.data.dto.FilterDto;
-import com.example.mstransactions.data.dto.PaymentData;
-import com.example.mstransactions.data.dto.TransactionCommissionDto;
-import com.example.mstransactions.data.dto.TransactionDto;
-import com.example.mstransactions.data.dto.TransferData;
+import com.example.mstransactions.data.Card;
+import com.example.mstransactions.data.dto.*;
+import com.example.mstransactions.data.enums.ProductTypeEnum;
 import com.example.mstransactions.data.enums.TransactionTypeEnum;
 import com.example.mstransactions.error.AccountServiceNotAvailableException;
 import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
@@ -28,6 +21,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreakerFactory;
 import org.springframework.stereotype.Service;
@@ -49,6 +44,9 @@ public class TransactionServiceImpl implements TransactionService {
 
   @Autowired
   private ReactiveCircuitBreakerFactory circuitBreakerFactory;
+
+  @Autowired
+  private TransactionUtil transactionUtil;
 
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -89,7 +87,7 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.getAmount(), String.valueOf(transaction.getTransactionDate()),
         transaction.getProductId(), null, null);
 
-    return TransactionUtil.findAccountById(transaction.getProductId())
+    return transactionUtil.findAccountById(transaction.getProductId())
         .flatMap(accountTransition -> {
           LocalDate localDate = LocalDate.parse(
               String.valueOf(transaction.getTransactionDate()), FORMATTER);
@@ -101,19 +99,19 @@ public class TransactionServiceImpl implements TransactionService {
                   transaction.getProductId())
               .count()
               .flatMap(numberOfTransactions ->
-                  TransactionUtil.findByAccountTypeAndName(
+                      transactionUtil.findByAccountTypeAndName(
                           accountTransition.getAccountType(), "maximoTransacciones")
                       .flatMap(accountConfiguration ->
                           (numberOfTransactions > accountConfiguration.getValue())
                               ? Mono.just(true)
                               : Mono.just(false))
                       .flatMap(isOutOfMaxTransactions ->
-                          TransactionUtil.setBalanceCommisionToDeposit(
+                              transactionUtil.setBalanceCommisionToDeposit(
                               isOutOfMaxTransactions, accountTransition,
                               transaction, transferData)
                       )
               )
-              .flatMap(finalAcount -> TransactionUtil.updateAccountBalance(finalAcount)
+              .flatMap(finalAcount -> transactionUtil.updateAccountBalance(finalAcount)
                   .flatMap(update -> this.saveOperation(transferData))
               );
         });
@@ -126,7 +124,7 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.getAmount(), String.valueOf(transaction.getTransactionDate()),
         transaction.getProductId(), null, null);
 
-    return TransactionUtil.findAccountById(
+    return transactionUtil.findAccountById(
         transaction.getProductId()).flatMap(accountTransition -> {
           LocalDate localDate = LocalDate.parse(
               String.valueOf(transaction.getTransactionDate()), FORMATTER);
@@ -137,19 +135,19 @@ public class TransactionServiceImpl implements TransactionService {
                   transaction.getProductId())
               .count()
               .flatMap(numberOfTransactions ->
-              TransactionUtil.findByAccountTypeAndName(
+                      transactionUtil.findByAccountTypeAndName(
                       accountTransition.getAccountType(), "maximoTransacciones")
                   .flatMap(accountConfiguration ->
                       (numberOfTransactions > accountConfiguration.getValue())
                           ? Mono.just(true)
                           : Mono.just(false))
                   .flatMap(isOutOfMaxTransactions ->
-                      TransactionUtil.setBalanceCommissionToWithdrawal(
+                          transactionUtil.setBalanceCommissionToWithdrawal(
                           isOutOfMaxTransactions, accountTransition,
                           transaction, transferData)
                   )
           )
-          .flatMap(finalAcount -> TransactionUtil.updateAccountBalance(finalAcount)
+          .flatMap(finalAcount -> transactionUtil.updateAccountBalance(finalAcount)
               .flatMap(update -> this.saveOperation(transferData))
           );
         });
@@ -162,9 +160,13 @@ public class TransactionServiceImpl implements TransactionService {
    * @version 1.0
    */
   public Mono<Transaction> saveOperation(TransferData transferData) {
+    LocalDateTime localDateTime = LocalDateTime.now();
+    if(transferData.getTransactionDate() != null){
+      localDateTime = LocalDate.parse(
+              transferData.getTransactionDate(), FORMATTER).atStartOfDay();
+    }
     Transaction saveTransaction = Transaction.builder()
-        .transactionDate(LocalDate.parse(
-            transferData.getTransactionDate(), FORMATTER).atStartOfDay())
+        .transactionDate(localDateTime)
         .amount(transferData.getAmount())
         .transactionType(transferData.getTransactionType())
         .originAccount(transferData.getOriginAccount())
@@ -180,7 +182,7 @@ public class TransactionServiceImpl implements TransactionService {
   @Override
   public Mono<Transaction> makePayment(TransactionDto transactionDto) {
 
-    return TransactionUtil.findCreditById(transactionDto.getProductId()).flatMap(credit -> {
+    return transactionUtil.findCreditById(transactionDto.getProductId()).flatMap(credit -> {
       if (transactionDto.getAmount().compareTo(credit.getMonthlyFee()) == 0) {
         return repo.countTransactionsByProductId(transactionDto.getProductId())
             .flatMap(count -> {
@@ -228,19 +230,19 @@ public class TransactionServiceImpl implements TransactionService {
         String.valueOf(transaction.getTransactionDate()), transaction.getProductId(),
         transaction.getCommerceName());
 
-    return TransactionUtil.findCreditCardById(transaction.getProductId()).flatMap(creditCard -> {
+    return transactionUtil.findCreditCardById(transaction.getProductId()).flatMap(creditCard -> {
       BigDecimal creditLimit = creditCard.getCreditLimit();
       BigDecimal remainingCredit = creditCard.getRemainingCredit();
 
       if (creditLimit.compareTo(transaction.getAmount()) != -1
           && remainingCredit.compareTo(transaction.getAmount()) != -1) {
         creditCard.setRemainingCredit(remainingCredit.subtract(transaction.getAmount()));
-        return TransactionUtil.updateCreditCardLimit(creditCard)
+        return transactionUtil.updateCreditCardLimit(creditCard)
             .flatMap(update -> this.saveConsumption(consumptionData));
       } else {
         return Mono.error(
             new CreditCardWithInsuficientBalanceException(
-                creditCard.getCreditCardId()));
+                creditCard.getCardId()));
       }
     });
   }
@@ -268,12 +270,12 @@ public class TransactionServiceImpl implements TransactionService {
         String.valueOf(transactionDto.getTransactionDate()), transactionDto.getProductId(),
         transactionDto.getOriginAccount(), transactionDto.getDestinationAccount());
 
-    return TransactionUtil.findAccountById(
+    return transactionUtil.findAccountById(
             transferData.getOriginAccount()).flatMap(originAccount -> {
               BigDecimal actualAmount = originAccount.getBalance();
               if (actualAmount.compareTo(transactionDto.getAmount()) != -1) {
                 originAccount.setBalance(actualAmount.subtract(transactionDto.getAmount()));
-                return TransactionUtil.updateAccountBalance(originAccount);
+                return transactionUtil.updateAccountBalance(originAccount);
               } else {
                 return Mono.error(
                     new AccountWithInsuficientBalanceException(
@@ -284,11 +286,11 @@ public class TransactionServiceImpl implements TransactionService {
                 throwable -> Mono.error(new AccountServiceNotAvailableException()))
         )
         .flatMap(accountOriginUpdated ->
-            TransactionUtil.findAccountById(
+                transactionUtil.findAccountById(
                 transferData.getDestinationAccount()).flatMap(destinationAccount -> {
                   destinationAccount.setBalance(
                       destinationAccount.getBalance().add(transactionDto.getAmount()));
-                  return TransactionUtil.updateAccountBalance(destinationAccount)
+                  return transactionUtil.updateAccountBalance(destinationAccount)
                       .flatMap(update -> this.saveOperation(transferData));
                 })
         )
@@ -356,7 +358,7 @@ public class TransactionServiceImpl implements TransactionService {
         .flatMap(accounts -> TransactionUtil.findCreditCardByCustomerId(customerId)
             .map(creditCard -> {
               CreditCardDailyBalanceDto creditCardDailyBalanceDto =
-                  new CreditCardDailyBalanceDto(creditCard.getCreditCardId(),
+                  new CreditCardDailyBalanceDto(creditCard.getCardId(),
                       creditCard.getCreditLimit().divide(
                           BigDecimal.valueOf(daysBetween), 2, RoundingMode.HALF_UP),
                       creditCard.getCreditLimit());
@@ -368,7 +370,7 @@ public class TransactionServiceImpl implements TransactionService {
                 throwable -> Mono.error(new CreditCardServiceNotAvailableException()))
             )
         )
-        .flatMap(creditCards -> TransactionUtil.findCreditByCustomerId(customerId)
+        .flatMap(creditCards -> transactionUtil.findCreditByCustomerId(customerId)
             .map(credit -> {
               CreditDailyBalanceDto creditDailyBalanceDto =
                   new CreditDailyBalanceDto(credit.getCreditId(),
@@ -394,7 +396,7 @@ public class TransactionServiceImpl implements TransactionService {
                 endDateTime.atStartOfDay());
     }
 
-    /**
+  /**
    * Get TransactionCommissionDto from Transaction.
    *
    * @author Alisson Arteaga / Christian Dionisio
@@ -409,5 +411,39 @@ public class TransactionServiceImpl implements TransactionService {
     transactionCommissionDto.setProductType(transaction.getProductType());
     transactionCommissionDto.setCommissionAmount(transaction.getCommissionAmount());
     return transactionCommissionDto;
+  }
+
+  @Override
+  public Mono<Transaction> makeWithdrawalOfDebitCard(TransactionDto transactionDto, String customerId) {
+    TransferData transferData = new TransferData(
+            TransactionTypeEnum.WITHDRAWAL.getTransactionType(),
+            transactionDto.getAmount(), transactionDto.getTransactionDate(),
+            transactionDto.getProductId(), null, null);
+    transferData.setProductType(ProductTypeEnum.DEBIT_CARD.getValue());
+
+    return transactionUtil.findDebitCardByCustomerId(customerId, transactionDto.getProductId())
+            .map(Card::getMainAccountId)
+            .flatMap(accountId -> {
+              System.out.println("accountId obtenido: " + accountId);
+              return transactionUtil.findAccountById(accountId)
+                      .flatMap(account -> {
+                        BigDecimal actualAmount = transactionDto.getAmount();
+                        if (account.getBalance().compareTo(actualAmount) != -1) {
+                          account.setBalance(account.getBalance().subtract(actualAmount));
+                          return Mono.just(account);
+                        } else {
+                          return Mono.error(
+                                  new AccountWithInsuficientBalanceException(
+                                          account.getAccountId()));
+                        }
+                      });
+            }).flatMap(finalAccount -> transactionUtil.updateAccountBalance(finalAccount)
+                    .flatMap(update -> this.saveOperation(transferData))
+            );
+  }
+
+  @Override
+  public Flux<Transaction> findLastTenTransactionsByProductTypeAndProductId(String productType, String productId) {
+    return repo.findAllByProductTypeAndProductIdOrderByTransactionDateDesc(productType, productId);
   }
 }

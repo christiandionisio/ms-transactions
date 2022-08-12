@@ -38,5 +38,16 @@ resilience4j.circuitbreaker:
       waitDurationInOpenState: 50s
       permittedNumberOfCallsInHalfOpenState: 3
 
-
+customer:
+  service:
+    uri: "http://localhost:9082/customers/"
+credit:
+  service:
+    uri: "http://localhost:9085/credits/"
+account:
+  service:
+    uri: "http://localhost:9083/accounts/"
+card:
+  service:
+    uri: "http://localhost:9084/cards/"
 

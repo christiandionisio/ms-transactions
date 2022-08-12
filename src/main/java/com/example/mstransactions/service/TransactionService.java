@@ -8,8 +8,6 @@ import com.example.mstransactions.model.Transaction;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
-
 /**
  * Service Layer of Transaction.
  *
@@ -46,4 +44,9 @@ public interface TransactionService {
   Mono<DailyBalanceTemplateResponse> getDailyBalanceTemplate(String customerId);
 
   Flux<Transaction> getReportByProductType(String productType, String startDate, String endDate);
+
+  Mono<Transaction> makeWithdrawalOfDebitCard(TransactionDto transactionDto, String customerId);
+
+  Flux<Transaction> findLastTenTransactionsByProductTypeAndProductId(String productType, String productId);
+
 }

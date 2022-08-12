@@ -9,7 +9,9 @@ package com.example.mstransactions.data.enums;
 public enum ProductTypeEnum {
   ACCOUNT("ACCOUNT"),
   CREDIT_CARD("CREDIT_CARD"),
-  CREDIT("CREDIT");
+  CREDIT("CREDIT"),
+
+  DEBIT_CARD("DEBIT_CARD");
 
   private String value;
 

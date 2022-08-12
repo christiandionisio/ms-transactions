@@ -10,14 +10,17 @@ import lombok.Data;
  * @version 1.0
  */
 @Data
-public class CreditCard {
-  private String creditCardId;
-  private String creditCardNumber;
+public class Card {
+  private String cardId;
+  private String cardNumber;
   private String expirationDate;
   private String cvv;
   private BigDecimal creditLimit;
   private BigDecimal remainingCredit;
   private String category;
   private String customerId;
+  private String cardType;
+  private String mainAccountId;
+  private boolean hasDebt;
 }
 
