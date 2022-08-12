@@ -2,7 +2,9 @@ package com.example.mstransactions.controller;
 
 import com.example.mstransactions.data.dto.TransactionDto;
 import com.example.mstransactions.data.enums.ProductTypeEnum;
+import com.example.mstransactions.data.enums.TransactionTypeEnum;
 import com.example.mstransactions.error.AccountWithInsuficientBalanceException;
+import com.example.mstransactions.error.AccountsWithInsuficientBalanceException;
 import com.example.mstransactions.error.CreditAmountToPayInvalidException;
 import com.example.mstransactions.error.CreditCardWithInsuficientBalanceException;
 import com.example.mstransactions.error.CreditPaymentAlreadyCompletedException;
@@ -66,10 +68,10 @@ public class TransactionControllerTest {
   @DisplayName("Create Transaction")
   void create() {
     Mockito.when(transactionService.create(Mockito.any(Transaction.class)))
-            .thenReturn(Mono.just(TransactionProvider.getTransaction()));
+            .thenReturn(Mono.just(TransactionProvider.getTransaction(ProductTypeEnum.ACCOUNT, TransactionTypeEnum.DEPOSIT)));
 
     webClient.post().uri("/transactions")
-            .body(Mono.just(TransactionProvider.getTransactionDto()), TransactionDto.class)
+            .body(Mono.just(TransactionProvider.getTransactionDto(ProductTypeEnum.ACCOUNT, TransactionTypeEnum.DEPOSIT)), TransactionDto.class)
             .exchange()
             .expectStatus().isCreated();
   }
@@ -78,7 +80,7 @@ public class TransactionControllerTest {
   @DisplayName("Read transaction")
   void read() {
     Mockito.when(transactionService.findById(Mockito.anyString()))
-            .thenReturn(Mono.just(TransactionProvider.getTransaction()));
+            .thenReturn(Mono.just(TransactionProvider.getTransaction(ProductTypeEnum.ACCOUNT, TransactionTypeEnum.DEPOSIT)));
 
     webClient.get().uri("/transactions/1")
             .accept(MediaType.APPLICATION_JSON_UTF8)
@@ -88,7 +90,7 @@ public class TransactionControllerTest {
             .expectBody(Transaction.class)
             .consumeWith(response -> {
               Transaction transaction = response.getResponseBody();
-              Assertions.assertThat(transaction.getTransactionId()).isEqualTo(TransactionProvider.getTransaction().getTransactionId());
+              Assertions.assertThat(transaction.getTransactionId()).isEqualTo(TransactionProvider.getTransaction(ProductTypeEnum.ACCOUNT, TransactionTypeEnum.DEPOSIT).getTransactionId());
             });
   }
 
@@ -96,23 +98,23 @@ public class TransactionControllerTest {
   @DisplayName("Update transaction")
   void update() {
     Mockito.when(transactionService.findById(Mockito.anyString()))
-            .thenReturn(Mono.just(TransactionProvider.getTransaction()));
+            .thenReturn(Mono.just(TransactionProvider.getTransaction(ProductTypeEnum.ACCOUNT, TransactionTypeEnum.DEPOSIT)));
     Mockito.when(transactionService.update(Mockito.any(Transaction.class)))
-            .thenReturn(Mono.just(TransactionProvider.getTransaction()));
+            .thenReturn(Mono.just(TransactionProvider.getTransaction(ProductTypeEnum.ACCOUNT, TransactionTypeEnum.DEPOSIT)));
 
     webClient.put().uri("/transactions/1")
-            .body(Mono.just(TransactionProvider.getTransactionDto()), TransactionDto.class)
+            .body(Mono.just(TransactionProvider.getTransactionDto(ProductTypeEnum.ACCOUNT, TransactionTypeEnum.DEPOSIT)), TransactionDto.class)
             .exchange()
             .expectStatus().isCreated()
             .expectBody(Transaction.class)
-            .isEqualTo(TransactionProvider.getTransaction());
+            .isEqualTo(TransactionProvider.getTransaction(ProductTypeEnum.ACCOUNT, TransactionTypeEnum.DEPOSIT));
   }
 
   @Test
   @DisplayName("Delete transaction")
   void delete() {
     Mockito.when(transactionService.findById(Mockito.anyString()))
-            .thenReturn(Mono.just(TransactionProvider.getTransaction()));
+            .thenReturn(Mono.just(TransactionProvider.getTransaction(ProductTypeEnum.ACCOUNT, TransactionTypeEnum.DEPOSIT)));
     Mockito.when(transactionService.delete(Mockito.anyString()))
             .thenReturn(Mono.empty());
 
@@ -289,10 +291,10 @@ public class TransactionControllerTest {
   @DisplayName("transferBetweenAccounts")
   void transferBetweenAccounts() {
     Mockito.when(transactionService.transferBetweenAccounts(Mockito.any(TransactionDto.class)))
-            .thenReturn(Mono.just(TransactionProvider.getTransaction()));
+            .thenReturn(Mono.just(TransactionProvider.getTransaction(ProductTypeEnum.ACCOUNT, TransactionTypeEnum.DEPOSIT)));
 
     webClient.post().uri("/transactions/transferBetweenAccounts")
-            .body(Mono.just(TransactionProvider.getTransactionDto()), TransactionDto.class)
+            .body(Mono.just(TransactionProvider.getTransactionDto(ProductTypeEnum.ACCOUNT, TransactionTypeEnum.DEPOSIT)), TransactionDto.class)
             .exchange()
             .expectStatus().isCreated();
   }
@@ -304,7 +306,7 @@ public class TransactionControllerTest {
             .thenReturn(Mono.error(new AccountWithInsuficientBalanceException(TransactionProvider.PRODUCT_ID_DEPOSIT)));
 
     webClient.post().uri("/transactions/transferBetweenAccounts")
-            .body(Mono.just(TransactionProvider.getTransactionDto()), TransactionDto.class)
+            .body(Mono.just(TransactionProvider.getTransactionDto(ProductTypeEnum.ACCOUNT, TransactionTypeEnum.DEPOSIT)), TransactionDto.class)
             .exchange()
             .expectStatus().isForbidden();
   }
@@ -316,7 +318,7 @@ public class TransactionControllerTest {
             .thenReturn(Mono.error(new Exception("GeneralException TEST")));
 
     webClient.post().uri("/transactions/transferBetweenAccounts")
-            .body(Mono.just(TransactionProvider.getTransactionDto()), TransactionDto.class)
+            .body(Mono.just(TransactionProvider.getTransactionDto(ProductTypeEnum.ACCOUNT, TransactionTypeEnum.DEPOSIT)), TransactionDto.class)
             .exchange()
             .expectStatus().is5xxServerError();
   }
@@ -348,5 +350,48 @@ public class TransactionControllerTest {
             .expectStatus().isOk()
             .expectBodyList(Transaction.class)
             .hasSize(1);
+  }
+
+  @Test
+  @DisplayName("Make withdrawal of a DebitCard Product.")
+  void makeWithdrawalOfDebitCard() {
+    TransactionDto transactionDto = TransactionProvider.getTransactionDto(ProductTypeEnum.DEBIT_CARD,TransactionTypeEnum.WITHDRAWAL);
+    Transaction transaction = TransactionProvider.getTransaction(ProductTypeEnum.DEBIT_CARD,TransactionTypeEnum.WITHDRAWAL);
+
+    Mockito.when(transactionService.makeWithdrawalOfDebitCard(Mockito.any(TransactionDto.class), Mockito.anyString()))
+            .thenReturn(Mono.just(transaction));
+
+    webClient.post().uri("/transactions/withdrawal/debit?customerId=1")
+            .body(Mono.just(transactionDto), TransactionDto.class)
+            .exchange()
+            .expectStatus().isCreated();
+  }
+
+  @Test
+  @DisplayName("Make withdrawal of a DebitCard Product with AccountsWithInsuficientBalanceException")
+  void makeWithdrawalOfDebitCardWithAccountsWithInsuficientBalanceException() {
+    TransactionDto transactionDto = TransactionProvider.getTransactionDto(ProductTypeEnum.DEBIT_CARD,TransactionTypeEnum.WITHDRAWAL);
+
+    Mockito.when(transactionService.makeWithdrawalOfDebitCard(Mockito.any(TransactionDto.class), Mockito.anyString()))
+            .thenReturn(Mono.error(new AccountsWithInsuficientBalanceException("1")));
+
+    webClient.post().uri("/transactions/withdrawal/debit?customerId=1")
+            .body(Mono.just(transactionDto), TransactionDto.class)
+            .exchange()
+            .expectStatus().isForbidden();
+  }
+
+  @Test
+  @DisplayName("Make withdrawal of a DebitCard Product with General Exception")
+  void makeWithdrawalOfDebitCardWithGeneralException() {
+    TransactionDto transactionDto = TransactionProvider.getTransactionDto(ProductTypeEnum.DEBIT_CARD,TransactionTypeEnum.WITHDRAWAL);
+
+    Mockito.when(transactionService.makeWithdrawalOfDebitCard(Mockito.any(TransactionDto.class), Mockito.anyString()))
+            .thenReturn(Mono.error(new Exception("GeneralException TEST")));
+
+    webClient.post().uri("/transactions/withdrawal/debit?customerId=1")
+            .body(Mono.just(transactionDto), TransactionDto.class)
+            .exchange()
+            .expectStatus().is5xxServerError();
   }
 }
