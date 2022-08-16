@@ -8,6 +8,11 @@ spring:
     config:
       name: ms-transactions
       uri: http://localhost:8081
+  # kafka configuration
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: default-group
 
 server:
   port: 8086
@@ -50,3 +55,10 @@ account:
 card:
   service:
     uri: "http://localhost:8084/cards/"
+
+
+# kafka configuration
+kafka:
+  topic:
+    name: payment-transaction-topic
+
