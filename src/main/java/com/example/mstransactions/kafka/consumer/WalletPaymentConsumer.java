@@ -3,6 +3,7 @@ package com.example.mstransactions.kafka.consumer;
 import com.example.mstransactions.data.Account;
 import com.example.mstransactions.data.dto.PaymentDto;
 import com.example.mstransactions.data.dto.TransactionDto;
+import com.example.mstransactions.service.TransactionService;
 import com.example.mstransactions.utils.TransactionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,11 +18,12 @@ public class WalletPaymentConsumer {
     @Autowired
     private TransactionUtil transactionUtil;
 
+    @Autowired
+    private TransactionService transactionService;
+
     @KafkaListener(topics = "${kafka.topic.name}")
     public void listener(@Payload PaymentDto paymentDto) {
-        log.info("Message received {} ", paymentDto.getPhoneNumberOrigin());
-        log.info("Message received {} ", paymentDto.getPhoneNumberDestination());
-
+        log.info("Message received {} ", paymentDto);
         TransactionDto transactionDto = new TransactionDto();
 
         transactionUtil.findAccountByWalletPhoneNumber(paymentDto.getPhoneNumberOrigin())
@@ -29,10 +31,11 @@ public class WalletPaymentConsumer {
                     transactionDto.setOriginAccount(accountOrigin.getAccountId());
                     return transactionUtil.findAccountByWalletPhoneNumber(paymentDto.getPhoneNumberDestination());
                 })
-                .doOnNext(accountDestination -> {
+                .flatMap(accountDestination -> {
                     setTransactionData(transactionDto, paymentDto, accountDestination);
-                    log.info("Message received {} ", transactionDto.toString());
+                    return transactionService.transferBetweenAccounts(transactionDto);
                 })
+                .doOnNext(transaction -> log.info("Transaction created {} ", transaction))
                 .subscribe();
 
 
@@ -44,6 +47,7 @@ public class WalletPaymentConsumer {
         transactionDto.setDestinationAccount(accountDestination.getAccountId());
         transactionDto.setProductId(transactionDto.getOriginAccount());
         transactionDto.setCommerceName("YANKI WALLET");
+        transactionDto.setTransactionDate(paymentDto.getDateTime());
     }
 
 }

@@ -295,10 +295,11 @@ public class TransactionServiceImpl implements TransactionService {
                   return transactionUtil.updateAccountBalance(destinationAccount)
                       .flatMap(update -> this.saveOperation(transferData));
                 })
-        )
-        .transform(it -> circuitBreakerFactory.create(ACCOUNT_SERVICE_NAME).run(it,
-            throwable -> Mono.error(new AccountServiceNotAvailableException()))
+                .transform(it -> circuitBreakerFactory.create(ACCOUNT_SERVICE_NAME).run(it,
+                        throwable -> Mono.error(new AccountServiceNotAvailableException()))
+                )
         );
+
   }
 
   /**

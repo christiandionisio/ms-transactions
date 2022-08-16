@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 
 @Data
@@ -17,5 +16,5 @@ public class PaymentDto {
     private BigDecimal amount;
     private String phoneNumberOrigin;
     private String phoneNumberDestination;
-    private LocalDateTime dateTime;
+    private String dateTime;
 }
