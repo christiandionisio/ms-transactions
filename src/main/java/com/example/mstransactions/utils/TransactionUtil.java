@@ -295,5 +295,21 @@ public class TransactionUtil {
             )
             .bodyToFlux(Account.class);
   }
+
+    /**
+     * Get account by Wallet phone number
+     *
+     * @param walletPhoneNumber Wallet Phone Number.
+     */
+    public Mono<Account> findAccountByWalletPhoneNumber(String walletPhoneNumber) {
+        return WebClient.create().get()
+                .uri( uriAccountService+ "findByWalletPhoneNumber/" + walletPhoneNumber )
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .onStatus(HttpStatus::is4xxClientError, response ->
+                        Mono.error(new AccountNotFoundException(walletPhoneNumber))
+                )
+                .bodyToMono(Account.class);
+    }
 }
 
