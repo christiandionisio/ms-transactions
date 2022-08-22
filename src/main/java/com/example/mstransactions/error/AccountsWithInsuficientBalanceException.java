@@ -8,6 +8,7 @@ package com.example.mstransactions.error;
  */
 public class AccountsWithInsuficientBalanceException extends Exception {
   public AccountsWithInsuficientBalanceException(String customerId) {
-    super("customerId: " + customerId + " with insuficient balance in associated accounts to debitCard product");
+    super("customerId: " + customerId
+        + " with insuficient balance in associated accounts to debitCard product");
   }
 }

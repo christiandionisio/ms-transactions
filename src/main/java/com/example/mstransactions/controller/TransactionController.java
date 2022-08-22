@@ -374,7 +374,8 @@ public class TransactionController {
   public Mono<ResponseEntity<Flux<Transaction>>> findLastTenTransactionsByProductTypeAndProductId(
           @RequestParam String productType, @RequestParam String productId) {
     return Mono.just(ResponseEntity.ok(
-                    service.findLastTenTransactionsByProductTypeAndProductId(productType, productId)))
+                    service
+                        .findLastTenTransactionsByProductTypeAndProductId(productType, productId)))
             .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 }
