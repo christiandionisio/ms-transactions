@@ -58,6 +58,7 @@ public class WalletPaymentConsumer {
     if (accountDestination.getAccountId() == null) {
       log.info("Account destination not found");
       log.info("Only make withdrawal");
+      transactionDto.setTransactionDate(paymentDto.getDateTime());
       return transactionService.makeWithdrawal(transactionDto);
     }
     return transactionService.transferBetweenAccounts(transactionDto);
